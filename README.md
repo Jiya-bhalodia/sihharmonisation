@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BHUMI-X
 ### AI-Powered Urban Land Record Harmonization Platform
 
@@ -257,3 +258,6 @@ Resolution, and Unified Land Records map here before submission.)*
 - Role-based access control for department-level data stewardship
 - Real-time collaborative conflict resolution
 - PostGIS-native spatial indexing for city-scale datasets
+=======
+# sihharmonisation
+>>>>>>> 132e6444c55e993f65c59027ef0272835649dc80
