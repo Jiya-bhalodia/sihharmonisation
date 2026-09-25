@@ -14,3 +14,4 @@ __pycache__/
 *.pyc
 
 scripts/backend/venv/
+data/raw/buildings/pune_buildings_microsoft.csv
