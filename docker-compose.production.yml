@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: bhumix
+      POSTGRES_USER: bhumix
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the shell or .env file}
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bhumix -d bhumix"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    environment:
+      DEMO_MODE: "false"
+      DATABASE_URL: postgresql+psycopg://bhumix:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the shell or .env file}@db:5432/bhumix
+      FRONTEND_ORIGIN: http://localhost:5173
+      TARGET_CRS: EPSG:4326
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgis_data:
