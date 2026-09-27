@@ -21,6 +21,7 @@ no match score, rather than a fabricated 100%.
 from typing import List, Dict, Any, Optional
 from difflib import SequenceMatcher
 from dataclasses import dataclass, field
+from app.services.embedding_service import local_text_similarity
 from app.geo.geometry_utils import (
     haversine_distance_m, iou, point_in_polygon_proximity
 )
@@ -28,7 +29,8 @@ from app.config import get_settings
 
 settings = get_settings()
 
-ATTRIBUTE_FIELDS_FOR_COMPARISON = ["owner_name", "land_use", "parcel_id", "survey_number"]
+ATTRIBUTE_FIELDS_FOR_COMPARISON = ["owner_name", "land_use", "parcel_id", "survey_number", "address"]
+IDENTIFIER_FIELDS = {"parcel_id", "survey_number"}
 
 
 @dataclass
@@ -58,7 +60,12 @@ def _attribute_similarity(props_a: Dict[str, Any], props_b: Dict[str, Any]) -> f
         va_str, vb_str = str(va).strip().lower(), str(vb).strip().lower()
         if not va_str or not vb_str:
             continue
-        shared_scores.append(SequenceMatcher(None, va_str, vb_str).ratio())
+        fuzzy_score = SequenceMatcher(None, va_str, vb_str).ratio()
+        if field_name not in IDENTIFIER_FIELDS:
+            embedding_score = local_text_similarity(va_str, vb_str)
+            if embedding_score is not None:
+                fuzzy_score = 0.65 * fuzzy_score + 0.35 * embedding_score
+        shared_scores.append(fuzzy_score)
     if not shared_scores:
         return 0.5  # neutral score when no comparable attributes exist
     return sum(shared_scores) / len(shared_scores)

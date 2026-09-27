@@ -116,6 +116,29 @@ def map_fields(source_fields: List[str], sample_row: Optional[Dict[str, Any]] = 
     return mappings
 
 
+def preserve_manual_overrides(generated: List[Dict[str, Any]], existing: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Carry reviewer-approved source-field mappings into a regenerated mapping set."""
+    approved = {
+        mapping["source_field"]: mapping
+        for mapping in existing
+        if mapping.get("manual_override")
+    }
+    preserved = []
+    for mapping in generated:
+        override = approved.get(mapping["source_field"])
+        if override:
+            preserved.append({
+                **mapping,
+                "canonical_field": override["canonical_field"],
+                "confidence": 100.0,
+                "method": "manual_override",
+                "manual_override": True,
+            })
+        else:
+            preserved.append({**mapping, "manual_override": False})
+    return preserved
+
+
 def needs_manual_review(confidence_pct: float) -> bool:
     return (confidence_pct / 100.0) < settings.SCHEMA_MAPPING_THRESHOLD
 

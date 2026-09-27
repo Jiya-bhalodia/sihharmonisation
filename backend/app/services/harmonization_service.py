@@ -27,31 +27,38 @@ AND revenue) was treated as an equally valid, independent anchor.
 """
 from typing import List, Dict, Any, Set
 from datetime import datetime
+import time
 from sqlalchemy.orm import Session
 from collections import defaultdict
+from math import cos, radians
+from shapely.geometry import box as geometry_box
+from shapely.strtree import STRtree
+from sqlalchemy import text
 
 from app.models.orm import (
     Dataset, Feature, UnifiedParcel, MatchRecord, AttributeMapping,
     ValidationResult, HarmonizationJob, Conflict
 )
+from app.services.embedding_service import embedding_metrics_summary, reset_embedding_metrics
 from app.utils.ids import new_id, job_id
 from app.utils.logger import get_logger
 from app.geo.crs import geojson_str_to_geometry, geometry_to_geojson_str
-from app.geo.topology import validate_geometry, detect_duplicates, detect_overlaps
+from app.geo.topology import validate_geometry, detect_duplicates, detect_overlaps, geometry_audit_snapshots
 from app.geo.geometry_utils import area_sqm, centroid_latlon
-from app.ml.schema_mapper import map_fields, needs_manual_review
+from app.ml.schema_mapper import map_fields, needs_manual_review, preserve_manual_overrides
 from app.ml.spatial_matcher import MatchCandidate, find_candidate_matches
 from app.services.conflict_service import detect_all_conflicts
 from app.services.change_service import detect_changes
 from app.config import get_settings
+from app.services.free_demo import FreeDemoTimeLimitExceeded, check_processing_deadline
 
 logger = get_logger("services.harmonization")
 settings = get_settings()
 
 
-def _stage(job: HarmonizationJob, name: str, status: str, processed: int = 0, warnings: int = 0, errors: int = 0, detail: str = ""):
+def _stage(db: Session, job: HarmonizationJob, name: str, status: str, processed: int = 0, warnings: int = 0, errors: int = 0, detail: str = ""):
     stages = list(job.stages or [])
-    stages.append({
+    stage = {
         "name": name,
         "status": status,
         "processed": processed,
@@ -59,39 +66,64 @@ def _stage(job: HarmonizationJob, name: str, status: str, processed: int = 0, wa
         "errors": errors,
         "detail": detail,
         "timestamp": datetime.utcnow().isoformat(),
-    })
+    }
+    # Keep a single current entry for each pipeline stage so polling clients
+    # don't continue displaying an earlier "running" status after completion.
+    existing = next((index for index, item in enumerate(stages) if item.get("name") == name), None)
+    if existing is None:
+        stages.append(stage)
+    else:
+        stages[existing] = stage
     job.stages = stages
+    # Persist each completed stage so the UI can show live progress while a
+    # long-running harmonization is handled by the background worker.
+    db.commit()
 
 
-def run_harmonization(db: Session) -> HarmonizationJob:
-    job = HarmonizationJob(id=job_id(), status="running", stages=[], started_at=datetime.utcnow())
-    db.add(job)
+def run_harmonization(db: Session, existing_job_id: str | None = None,
+                      max_processing_seconds: int | None = None) -> HarmonizationJob:
+    deadline = time.monotonic() + max_processing_seconds if max_processing_seconds else None
+    check_processing_deadline(deadline)
+    if existing_job_id:
+        job = db.query(HarmonizationJob).filter(HarmonizationJob.id == existing_job_id).first()
+        if job is None:
+            raise ValueError(f"Harmonization job {existing_job_id} does not exist")
+        job.status = "running"
+        job.stages = []
+        job.started_at = datetime.utcnow()
+        job.completed_at = None
+    else:
+        job = HarmonizationJob(id=job_id(), status="running", stages=[], started_at=datetime.utcnow())
+        db.add(job)
     db.commit()
     db.refresh(job)
+    running_job_id = job.id
 
     try:
         datasets = db.query(Dataset).all()
         if not datasets:
-            _stage(job, "Ingestion", "failed", detail="No datasets found. Upload data first.")
+            _stage(db, job, "Ingestion", "failed", detail="No datasets found. Upload data first.")
             job.status = "failed"
             db.commit()
             return job
 
-        _stage(job, "Ingestion", "completed", processed=len(datasets), detail=f"{len(datasets)} datasets available")
+        _stage(db, job, "Ingestion", "completed", processed=len(datasets), detail=f"{len(datasets)} datasets available")
 
         # --- Stage 2: CRS Normalization verification ---
         all_features = db.query(Feature).all()
         crs_ok = sum(1 for f in all_features if f.geometry_geojson)
         distinct_source_crs = sorted({d.crs for d in datasets if d.crs})
-        _stage(job, "CRS Normalization", "completed", processed=crs_ok,
+        _stage(db, job, "CRS Normalization", "completed", processed=crs_ok,
                detail=f"Source CRS(s) detected: {', '.join(distinct_source_crs) or 'n/a'} "
                       f"-> all geometries normalized to {settings.TARGET_CRS}")
 
         # --- Stage 3: Schema Mapping ---
         mapping_count = 0
         review_count = 0
+        previous_mappings = db.query(AttributeMapping).all()
         db.query(AttributeMapping).delete()
         for dataset in datasets:
+            check_processing_deadline(deadline)
             feats = db.query(Feature).filter(Feature.dataset_id == dataset.id).limit(50).all()
             field_names = set()
             sample_row = {}
@@ -102,7 +134,14 @@ def run_harmonization(db: Session) -> HarmonizationJob:
                         sample_row = f.raw_properties
             if not field_names:
                 continue
-            mappings = map_fields(list(field_names), sample_row)
+            mappings = preserve_manual_overrides(
+                map_fields(list(field_names), sample_row),
+                [
+                    {"source_field": item.source_field, "canonical_field": item.canonical_field,
+                     "manual_override": item.manual_override}
+                    for item in previous_mappings if item.dataset_id == dataset.id
+                ],
+            )
             for m in mappings:
                 am = AttributeMapping(
                     id=new_id("AM"),
@@ -111,31 +150,39 @@ def run_harmonization(db: Session) -> HarmonizationJob:
                     canonical_field=m["canonical_field"],
                     confidence=m["confidence"],
                     method=m["method"],
-                    manual_override=False,
+                    manual_override=m.get("manual_override", False),
                 )
                 db.add(am)
                 mapping_count += 1
                 if needs_manual_review(m["confidence"]):
                     review_count += 1
         db.commit()
-        _stage(job, "Schema Mapping", "completed", processed=mapping_count, warnings=review_count,
+        _stage(db, job, "Schema Mapping", "completed", processed=mapping_count, warnings=review_count,
                detail=f"{mapping_count} fields mapped, {review_count} flagged for review")
 
         # --- Stage 4: Topology Validation ---
+        _stage(db, job, "Topology Validation", "running", processed=0,
+               detail=f"Checking geometry validity and spatial-index candidates across {len(all_features)} features")
         db.query(ValidationResult).delete()
         topo_errors = 0
         topo_corrected = 0
+        topology_processed = 0
         for dataset in datasets:
+            check_processing_deadline(deadline)
             feats = db.query(Feature).filter(Feature.dataset_id == dataset.id).all()
             geoms_for_dup_check = []
             for f in feats:
+                check_processing_deadline(deadline)
                 geom = geojson_str_to_geometry(f.geometry_geojson) if f.geometry_geojson else None
+                original_geometry_geojson = f.geometry_geojson
                 vresult = validate_geometry(geom)
+                f.is_valid_geometry = vresult["is_valid"]
                 if not vresult["is_valid"] or vresult["issue_type"] != "none":
                     topo_errors += 1
-                    corrected_geojson = None
+                    audit_original_geojson, corrected_geojson = geometry_audit_snapshots(
+                        original_geometry_geojson, vresult["corrected_geometry"]
+                    )
                     if vresult["corrected_geometry"] is not None:
-                        corrected_geojson = geometry_to_geojson_str(vresult["corrected_geometry"])
                         topo_corrected += 1
                         # Keep the original in ValidationResult for audit, then let every
                         # later stage use the corrected geometry rather than merely
@@ -151,16 +198,25 @@ def run_harmonization(db: Session) -> HarmonizationJob:
                         dataset_id=dataset.id,
                         is_valid=vresult["is_valid"],
                         issue_type=vresult["issue_type"],
-                        original_geometry=f.geometry_geojson,
+                        original_geometry=audit_original_geojson,
                         corrected_geometry=corrected_geojson,
                         corrected=vresult["corrected"],
                     )
                     db.add(vr)
-                    f.is_valid_geometry = vresult["is_valid"]
                 if geom is not None and geom.geom_type in ("Polygon", "MultiPolygon"):
                     geoms_for_dup_check.append({"id": f.id, "geometry": geom})
 
-            dup_issues = detect_duplicates(geoms_for_dup_check)
+                topology_processed += 1
+                if topology_processed % 100 == 0:
+                    _stage(db, job, "Topology Validation", "running", processed=topology_processed,
+                           warnings=topo_errors,
+                           detail=f"Validated {topology_processed}/{len(all_features)} features; processing {dataset.name}")
+
+            _stage(db, job, "Topology Validation", "running", processed=topology_processed,
+                   warnings=topo_errors,
+                   detail=f"Checking indexed duplicate and overlap candidates in {dataset.name} ({len(geoms_for_dup_check)} polygons)")
+            deadline_check = lambda: check_processing_deadline(deadline)
+            dup_issues = detect_duplicates(geoms_for_dup_check, deadline_check=deadline_check)
             for dup in dup_issues:
                 topo_errors += 1
                 vr = ValidationResult(
@@ -174,7 +230,7 @@ def run_harmonization(db: Session) -> HarmonizationJob:
                     corrected=False,
                 )
                 db.add(vr)
-            overlap_issues = detect_overlaps(geoms_for_dup_check)
+            overlap_issues = detect_overlaps(geoms_for_dup_check, deadline_check=deadline_check)
             for overlap in overlap_issues:
                 topo_errors += 1
                 db.add(ValidationResult(
@@ -182,11 +238,14 @@ def run_harmonization(db: Session) -> HarmonizationJob:
                     is_valid=False, issue_type="overlap", original_geometry=None,
                     corrected_geometry=None, corrected=False,
                 ))
+            _stage(db, job, "Topology Validation", "running", processed=topology_processed,
+                   warnings=topo_errors, detail=f"Finished spatial checks for {dataset.name}")
         db.commit()
-        _stage(job, "Topology Validation", "completed", processed=len(all_features),
+        _stage(db, job, "Topology Validation", "completed", processed=len(all_features),
                warnings=topo_errors, detail=f"{topo_errors} issues found, {topo_corrected} auto-corrected")
 
         # --- Stage 5: Spatial Matching ---
+        reset_embedding_metrics()
         db.query(MatchRecord).delete()
         dataset_map = {d.id: d for d in datasets}
         all_candidates: List[MatchCandidate] = []
@@ -206,6 +265,14 @@ def run_harmonization(db: Session) -> HarmonizationJob:
             )
             all_candidates.append(mc)
 
+        # Prune impossible matches with the PostGIS GiST index in production.
+        # SQLite/demo deployments use the equivalent in-memory STRtree fallback.
+        indexed_candidates = [candidate for candidate in all_candidates
+                              if candidate.geometry is not None and not candidate.geometry.is_empty]
+        candidate_tree = STRtree([candidate.geometry for candidate in indexed_candidates]) if indexed_candidates else None
+        candidates_by_id = {candidate.feature_id: candidate for candidate in indexed_candidates}
+        use_postgis_index = db.bind is not None and db.bind.dialect.name == "postgresql"
+
         matched_groups: Dict[str, MatchCandidate] = {}
         group_counter = 0
         match_count = 0
@@ -215,12 +282,31 @@ def run_harmonization(db: Session) -> HarmonizationJob:
             nonlocal group_counter, match_count
             if anchor.feature_id in used_feature_ids:
                 return
-            candidates = find_candidate_matches(anchor, all_candidates, min_confidence_pct=40.0)
+            nearby_candidates = []
+            if candidate_tree is not None and anchor.geometry is not None and not anchor.geometry.is_empty:
+                search_distance_m = settings.MATCH_MAX_DISTANCE_M * 3.0
+                lat_delta = search_distance_m / 111_320.0
+                cosine = max(0.05, abs(cos(radians(anchor.centroid_lat or 0.0))))
+                lon_delta = lat_delta / cosine
+                min_x, min_y, max_x, max_y = anchor.geometry.bounds
+                search_area = geometry_box(min_x - lon_delta, min_y - lat_delta,
+                                           max_x + lon_delta, max_y + lat_delta)
+                if use_postgis_index:
+                    rows = db.execute(text(
+                        "SELECT id FROM features WHERE geom && ST_MakeEnvelope(:min_x, :min_y, :max_x, :max_y, 4326)"
+                    ), {"min_x": min_x - lon_delta, "min_y": min_y - lat_delta,
+                        "max_x": max_x + lon_delta, "max_y": max_y + lat_delta}).all()
+                    nearby_candidates = [candidates_by_id[row[0]] for row in rows if row[0] in candidates_by_id]
+                else:
+                    indices = candidate_tree.query(search_area)
+                    nearby_candidates = [indexed_candidates[int(index)] for index in indices]
+            candidates = find_candidate_matches(anchor, nearby_candidates, min_confidence_pct=40.0)
             group_counter += 1
             group_id = f"GRP-{group_counter:04d}"
             used_feature_ids.add(anchor.feature_id)
             seen_datasets = {anchor.dataset_id}
             for c in candidates:
+                check_processing_deadline(deadline)
                 cand = c["candidate"]
                 if cand.dataset_id in seen_datasets or cand.feature_id in used_feature_ids:
                     continue  # only best match per source dataset, and never reuse a feature
@@ -241,6 +327,7 @@ def run_harmonization(db: Session) -> HarmonizationJob:
         # always form the primary anchors.
         cadastral_anchors = [c for c in all_candidates if c.source_type == "cadastral"]
         for anchor in cadastral_anchors:
+            check_processing_deadline(deadline)
             _process_anchor(anchor)
 
         # Fallback: any remaining parcel-typed record not yet absorbed into
@@ -252,31 +339,47 @@ def run_harmonization(db: Session) -> HarmonizationJob:
             if c.canonical_type == "parcel" and c.feature_id not in used_feature_ids
         ]
         for anchor in fallback_anchors:
+            check_processing_deadline(deadline)
             _process_anchor(anchor)
 
         db.commit()
-        _stage(job, "Spatial Matching", "completed", processed=match_count,
+        _stage(db, job, "Spatial Matching", "completed", processed=match_count,
                detail=f"{len(matched_groups)} feature groups formed "
-                      f"({len(cadastral_anchors)} cadastral-anchored, {len(fallback_anchors)} fallback-anchored)")
+                      f"({len(cadastral_anchors)} cadastral-anchored, {len(fallback_anchors)} fallback-anchored). "
+                      f"{embedding_metrics_summary()}")
 
         # --- Stage 6+8: Conflict Detection & Confidence Scoring -> feeds Unified Record ---
-        conflict_count = detect_all_conflicts(db, all_candidates, matched_groups)
-        _stage(job, "Conflict Detection", "completed", processed=len(all_candidates), warnings=conflict_count,
+        _stage(db, job, "Conflict Detection", "running", processed=0,
+               detail=f"Checking spatial conflicts across {len(all_candidates)} features using indexed candidates")
+        check_processing_deadline(deadline)
+        conflict_count = detect_all_conflicts(
+            db, all_candidates, matched_groups,
+            deadline_check=lambda: check_processing_deadline(deadline),
+        )
+        check_processing_deadline(deadline)
+        _stage(db, job, "Conflict Detection", "completed", processed=len(all_candidates), warnings=conflict_count,
                detail=f"{conflict_count} conflicts identified")
 
-        _stage(job, "Conflict Resolution", "completed", processed=conflict_count,
+        _stage(db, job, "Conflict Resolution", "completed", processed=conflict_count,
                detail="Conflicts queued for human review in Conflict Resolution workspace")
 
-        unified_count = _build_unified_parcels(db, matched_groups)
-        _stage(job, "Confidence Scoring", "completed", processed=unified_count,
+        unified_count = _build_unified_parcels(
+            db, matched_groups,
+            deadline_check=lambda: check_processing_deadline(deadline),
+        )
+        _stage(db, job, "Confidence Scoring", "completed", processed=unified_count,
                detail="Spatial, attribute, geometry and source-agreement confidence computed per parcel")
 
-        _stage(job, "Unified Land Record", "completed", processed=unified_count,
+        _stage(db, job, "Unified Land Record", "completed", processed=unified_count,
                detail=f"{unified_count} unified parcel records generated")
 
-        change_count = detect_changes(db, job.id)
-        _stage(job, "Change Detection", "completed", processed=change_count,
-               detail=f"{change_count} changes detected against the previous harmonized snapshot")
+        if settings.FREE_DEMO_MODE:
+            _stage(db, job, "Change Detection", "disabled", processed=0,
+                   detail="Snapshot-based change detection is disabled because this hosted free demo has no durable local disk.")
+        else:
+            change_count = detect_changes(db, job.id)
+            _stage(db, job, "Change Detection", "completed", processed=change_count,
+                   detail=f"{change_count} changes detected against the previous harmonized snapshot")
 
         job.status = "completed"
         job.total_processed = unified_count
@@ -287,9 +390,17 @@ def run_harmonization(db: Session) -> HarmonizationJob:
         return job
 
     except Exception as e:
-        logger.exception(f"Harmonization job {job.id} failed: {e}")
-        _stage(job, "Pipeline Error", "failed", detail=str(e))
+        db.rollback()
+        job = db.query(HarmonizationJob).filter(HarmonizationJob.id == running_job_id).first()
+        logger.exception(f"Harmonization job {running_job_id} failed: {e}")
+        if job is None:
+            raise
+        detail = str(e) if isinstance(e, FreeDemoTimeLimitExceeded) else (
+            f"Pipeline failed ({type(e).__name__}). Check backend worker logs for job {running_job_id}."
+        )
+        _stage(db, job, "Pipeline Error", "failed", errors=1, detail=detail)
         job.status = "failed"
+        job.completed_at = datetime.utcnow()
         db.commit()
         return job
 
@@ -308,12 +419,19 @@ def _apply_canonical_mapping(db: Session, feature: Feature) -> Dict[str, Any]:
     return canonical
 
 
-def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidate"]) -> int:
+def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidate"],
+                           deadline_check=None) -> int:
+    # Match rows may still reference results from an earlier run. Clear those
+    # nullable links before replacing the unified parcel snapshot.
+    db.query(MatchRecord).update({MatchRecord.parcel_unified_id: None}, synchronize_session=False)
+    db.flush()
     db.query(UnifiedParcel).delete()
     db.commit()
 
     count = 0
     for group_id, anchor in matched_groups.items():
+        if deadline_check:
+            deadline_check()
         records = db.query(MatchRecord).filter(MatchRecord.matched_group_id == group_id).all()
         feature_ids = [r.feature_id for r in records]
         features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
@@ -376,6 +494,8 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
             _absorb(anchor_feature, 100.0 if anchor.source_type == "cadastral" else 90.0)
 
         for rec in records:
+            if deadline_check:
+                deadline_check()
             f = feature_map.get(rec.feature_id)
             if f:
                 _absorb(f, rec.overall_confidence)
@@ -432,6 +552,9 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
             last_updated=datetime.utcnow(),
         )
         db.add(up)
+        # Without an ORM relationship SQLAlchemy may flush MatchRecord UPDATEs
+        # before the new UnifiedParcel INSERT. Materialize the FK target first.
+        db.flush()
 
         for rec in records:
             rec.parcel_unified_id = up.id
@@ -439,17 +562,21 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
         count += 1
 
     db.commit()
-    _link_conflicts_to_parcels(db)
+    _link_conflicts_to_parcels(db, deadline_check=deadline_check)
     return count
 
 
-def _link_conflicts_to_parcels(db: Session):
+def _link_conflicts_to_parcels(db: Session, deadline_check=None):
     parcels = db.query(UnifiedParcel).all()
     conflicts = db.query(Conflict).filter(Conflict.status == "Open").all()
     conflict_parcel_ids = defaultdict(set)
     for conflict in conflicts:
+        if deadline_check:
+            deadline_check()
         if conflict.feature_ref:
             for p in parcels:
+                if deadline_check:
+                    deadline_check()
                 lineage_feature_ids = {v.get("feature_id") for v in (p.lineage or {}).values()}
                 if conflict.feature_ref in lineage_feature_ids:
                     conflict.parcel_id = p.id

@@ -8,13 +8,21 @@ corrected geometry are always retained (ValidationResult rows).
 """
 from typing import List, Dict, Any
 from shapely.geometry.base import BaseGeometry
+from shapely.strtree import STRtree
 from shapely.validation import make_valid, explain_validity
 from app.geo.geometry_utils import area_sqm
 from app.utils.logger import get_logger
+from app.geo.crs import geometry_to_geojson_str
 
 logger = get_logger("geo.topology")
 
 SLIVER_AREA_RATIO_THRESHOLD = 0.02  # perimeter^2/area ratio heuristic threshold
+
+
+def geometry_audit_snapshots(original_geojson: str | None, corrected_geometry: BaseGeometry | None) -> tuple[str | None, str | None]:
+    """Return immutable original and corrected geometry payloads for the audit record."""
+    corrected_geojson = geometry_to_geojson_str(corrected_geometry) if corrected_geometry is not None else None
+    return original_geojson, corrected_geojson
 
 
 def validate_geometry(geom: BaseGeometry) -> Dict[str, Any]:
@@ -67,7 +75,7 @@ def validate_geometry(geom: BaseGeometry) -> Dict[str, Any]:
     return result
 
 
-def detect_duplicates(geometries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def detect_duplicates(geometries: List[Dict[str, Any]], deadline_check=None) -> List[Dict[str, Any]]:
     """
     Given a list of {id, geometry} dicts, flag geometries that are
     near-identical (equals_exact within tolerance or very high IoU).
@@ -76,13 +84,22 @@ def detect_duplicates(geometries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     from app.geo.geometry_utils import iou
 
     issues = []
-    n = len(geometries)
-    for i in range(n):
-        for j in range(i + 1, n):
-            g1, g2 = geometries[i], geometries[j]
-            geom1, geom2 = g1.get("geometry"), g2.get("geometry")
-            if geom1 is None or geom2 is None or geom1.is_empty or geom2.is_empty:
+    # STRtree restricts expensive metric reprojection/overlay work to pairs
+    # whose bounding boxes intersect. Cadastral layers are usually sparse, so
+    # this avoids the previous quadratic all-pairs scan.
+    valid = [(entry, entry.get("geometry")) for entry in geometries
+             if entry.get("geometry") is not None and not entry["geometry"].is_empty]
+    if len(valid) < 2:
+        return issues
+    tree = STRtree([geom for _, geom in valid])
+    for i, (g1, geom1) in enumerate(valid):
+        if deadline_check:
+            deadline_check()
+        for j in tree.query(geom1):
+            j = int(j)
+            if j <= i:
                 continue
+            g2, geom2 = valid[j]
             if geom1.geom_type != geom2.geom_type:
                 continue
             try:
@@ -99,7 +116,8 @@ def detect_duplicates(geometries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return issues
 
 
-def detect_overlaps(geometries: List[Dict[str, Any]], min_overlap_ratio: float = 0.05) -> List[Dict[str, Any]]:
+def detect_overlaps(geometries: List[Dict[str, Any]], min_overlap_ratio: float = 0.05,
+                    deadline_check=None) -> List[Dict[str, Any]]:
     """
     Detect meaningful (non-duplicate, non-trivial) overlaps between polygons
     from the SAME layer (e.g. two parcels overlapping each other).
@@ -107,13 +125,20 @@ def detect_overlaps(geometries: List[Dict[str, Any]], min_overlap_ratio: float =
     from app.geo.geometry_utils import iou
 
     issues = []
-    n = len(geometries)
-    for i in range(n):
-        for j in range(i + 1, n):
-            g1, g2 = geometries[i], geometries[j]
-            geom1, geom2 = g1.get("geometry"), g2.get("geometry")
-            if geom1 is None or geom2 is None or geom1.is_empty or geom2.is_empty:
+    valid = [(entry, entry.get("geometry")) for entry in geometries
+             if entry.get("geometry") is not None and not entry["geometry"].is_empty
+             and entry["geometry"].geom_type in ("Polygon", "MultiPolygon")]
+    if len(valid) < 2:
+        return issues
+    tree = STRtree([geom for _, geom in valid])
+    for i, (g1, geom1) in enumerate(valid):
+        if deadline_check:
+            deadline_check()
+        for j in tree.query(geom1):
+            j = int(j)
+            if j <= i:
                 continue
+            g2, geom2 = valid[j]
             try:
                 overlap = iou(geom1, geom2)
                 if min_overlap_ratio < overlap <= 0.97:

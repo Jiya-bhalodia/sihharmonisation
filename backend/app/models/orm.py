@@ -138,7 +138,7 @@ class HarmonizationJob(Base):
     __tablename__ = "harmonization_jobs"
 
     id = Column(String, primary_key=True)
-    status = Column(String, default="running")  # running, completed, failed
+    status = Column(String, default="queued")  # queued, running, completed, failed
     stages = Column(JSON, default=list)
     total_processed = Column(Integer, default=0)
     started_at = Column(DateTime, default=datetime.utcnow)
@@ -156,3 +156,30 @@ class ChangeEvent(Base):
     after = Column(JSON, nullable=True)
     confidence = Column(Float, default=0.0)
     detected_at = Column(DateTime, default=datetime.utcnow)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True)
+    email = Column(String, nullable=False, unique=True, index=True)
+    full_name = Column(String, nullable=False)
+    role = Column(String, nullable=False, index=True)
+    password_hash = Column(String, nullable=False)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String, primary_key=True)
+    actor_user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
+    actor_email = Column(String, nullable=False)
+    action = Column(String, nullable=False, index=True)
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=True, index=True)
+    before_state = Column(JSON, nullable=True)
+    after_state = Column(JSON, nullable=True)
+    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)

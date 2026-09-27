@@ -18,6 +18,7 @@ from typing import List, Dict
 from sqlalchemy.orm import Session
 from datetime import datetime
 from collections import defaultdict
+from shapely.strtree import STRtree
 
 from app.models.orm import Conflict, MatchRecord, Feature, Dataset
 from app.utils.ids import new_id
@@ -32,18 +33,19 @@ BOUNDARY_CROSS_MIN_IOU = 0.02
 BOUNDARY_CROSS_MAX_IOU = 0.85    # if IoU is this high the building is essentially inside, not crossing
 
 
-def detect_all_conflicts(db: Session, candidates: List[MatchCandidate], matched_groups: Dict[str, MatchCandidate]) -> int:
+def detect_all_conflicts(db: Session, candidates: List[MatchCandidate], matched_groups: Dict[str, MatchCandidate],
+                         deadline_check=None) -> int:
     db.query(Conflict).filter(Conflict.status == "Open").delete()
     db.commit()
 
     count = 0
-    count += _detect_parcel_overlaps(db, candidates)
-    count += _detect_building_boundary_crossings(db, candidates)
-    count += _detect_utility_crossings(db, candidates)
-    count += _detect_area_mismatches(db, matched_groups)
-    count += _detect_duplicate_ids(db)
-    count += _detect_gnss_outside_parcel(db, candidates)
-    count += _detect_owner_conflicts(db, matched_groups)
+    count += _detect_parcel_overlaps(db, candidates, deadline_check)
+    count += _detect_building_boundary_crossings(db, candidates, deadline_check)
+    count += _detect_utility_crossings(db, candidates, deadline_check)
+    count += _detect_area_mismatches(db, matched_groups, deadline_check)
+    count += _detect_duplicate_ids(db, deadline_check)
+    count += _detect_gnss_outside_parcel(db, candidates, deadline_check)
+    count += _detect_owner_conflicts(db, matched_groups, deadline_check)
     db.commit()
     return count
 
@@ -64,14 +66,27 @@ def _add_conflict(db, conflict_type, severity, feature_ref, source_a, source_b, 
     ))
 
 
-def _detect_parcel_overlaps(db: Session, candidates: List[MatchCandidate]) -> int:
+def _tree(items):
+    """Build a Shapely 2 STRtree and keep its source objects in index order."""
+    indexed = [(item, item.geometry) for item in items
+               if item.geometry is not None and not item.geometry.is_empty]
+    return (STRtree([geom for _, geom in indexed]), indexed) if indexed else (None, [])
+
+
+def _detect_parcel_overlaps(db: Session, candidates: List[MatchCandidate], deadline_check=None) -> int:
     parcels = [c for c in candidates if c.canonical_type == "parcel" and c.geometry is not None]
     count = 0
-    for i in range(len(parcels)):
-        for j in range(i + 1, len(parcels)):
-            a, b = parcels[i], parcels[j]
+    tree, indexed = _tree(parcels)
+    for i, (a, _) in enumerate(indexed):
+        if deadline_check:
+            deadline_check()
+        for raw_j in tree.query(a.geometry):
+            j = int(raw_j)
+            if j <= i:
+                continue
+            b = indexed[j][0]
             if a.dataset_id != b.dataset_id:
-                continue  # only flag overlaps within the same authoritative layer
+                continue
             overlap = iou(a.geometry, b.geometry)
             if 0.05 < overlap < 0.97:
                 _add_conflict(
@@ -84,12 +99,20 @@ def _detect_parcel_overlaps(db: Session, candidates: List[MatchCandidate]) -> in
     return count
 
 
-def _detect_building_boundary_crossings(db: Session, candidates: List[MatchCandidate]) -> int:
+def _detect_building_boundary_crossings(db: Session, candidates: List[MatchCandidate], deadline_check=None) -> int:
     parcels = [c for c in candidates if c.canonical_type == "parcel" and c.geometry is not None]
     buildings = [c for c in candidates if c.canonical_type == "building" and c.geometry is not None]
     count = 0
+    tree, indexed = _tree(parcels)
+    if tree is None:
+        return 0
     for building in buildings:
-        for parcel in parcels:
+        if deadline_check:
+            deadline_check()
+        if building.geometry.is_empty:
+            continue
+        for raw_index in tree.query(building.geometry):
+            parcel = indexed[int(raw_index)][0]
             if building.geometry.is_empty or parcel.geometry.is_empty:
                 continue
             overlap = iou(building.geometry, parcel.geometry)
@@ -106,12 +129,18 @@ def _detect_building_boundary_crossings(db: Session, candidates: List[MatchCandi
     return count
 
 
-def _detect_utility_crossings(db: Session, candidates: List[MatchCandidate]) -> int:
+def _detect_utility_crossings(db: Session, candidates: List[MatchCandidate], deadline_check=None) -> int:
     parcels = [c for c in candidates if c.canonical_type == "parcel" and c.geometry is not None]
     utilities = [c for c in candidates if c.canonical_type == "utility" and c.geometry is not None]
     count = 0
+    tree, indexed = _tree(parcels)
+    if tree is None:
+        return 0
     for utility in utilities:
-        for parcel in parcels:
+        if deadline_check:
+            deadline_check()
+        for raw_index in tree.query(utility.geometry):
+            parcel = indexed[int(raw_index)][0]
             try:
                 if utility.geometry.is_empty or parcel.geometry.is_empty:
                     continue
@@ -129,7 +158,7 @@ def _detect_utility_crossings(db: Session, candidates: List[MatchCandidate]) -> 
     return count
 
 
-def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidate]) -> int:
+def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None) -> int:
     """Compare area of matched features across sources within the same
     group, always including the group's anchor feature (typically the
     authoritative cadastral parcel)."""
@@ -139,6 +168,8 @@ def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidat
 
     count = 0
     for group_id, anchor in matched_groups.items():
+        if deadline_check:
+            deadline_check()
         records = groups.get(group_id, [])
         feature_ids = [r.feature_id for r in records]
         features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
@@ -169,12 +200,16 @@ def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidat
     return count
 
 
-def _detect_duplicate_ids(db: Session) -> int:
+def _detect_duplicate_ids(db: Session, deadline_check=None) -> int:
     count = 0
     for dataset in db.query(Dataset).all():
+        if deadline_check:
+            deadline_check()
         features = db.query(Feature).filter(Feature.dataset_id == dataset.id).all()
         seen = {}
         for f in features:
+            if deadline_check:
+                deadline_check()
             props = f.raw_properties or {}
             key = None
             for candidate_key in ("parcel_id", "survey_no", "property_id", "khasra_no", "plot_no"):
@@ -197,11 +232,13 @@ def _detect_duplicate_ids(db: Session) -> int:
     return count
 
 
-def _detect_gnss_outside_parcel(db: Session, candidates: List[MatchCandidate]) -> int:
+def _detect_gnss_outside_parcel(db: Session, candidates: List[MatchCandidate], deadline_check=None) -> int:
     parcels = [c for c in candidates if c.canonical_type == "parcel" and c.geometry is not None]
     gnss_points = [c for c in candidates if c.canonical_type == "gnss_point" and c.geometry is not None]
     count = 0
     for point in gnss_points:
+        if deadline_check:
+            deadline_check()
         best_proximity = 0.0
         for parcel in parcels:
             score = point_in_polygon_proximity(point.geometry, parcel.geometry)
@@ -218,7 +255,7 @@ def _detect_gnss_outside_parcel(db: Session, candidates: List[MatchCandidate]) -
     return count
 
 
-def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidate]) -> int:
+def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None) -> int:
     from difflib import SequenceMatcher
     groups = defaultdict(list)
     for rec in db.query(MatchRecord).all():
@@ -226,6 +263,8 @@ def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidat
 
     count = 0
     for group_id, anchor in matched_groups.items():
+        if deadline_check:
+            deadline_check()
         records = groups.get(group_id, [])
         feature_ids = [r.feature_id for r in records]
         features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []

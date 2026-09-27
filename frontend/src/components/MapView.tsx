@@ -40,10 +40,10 @@ function ZoomControls() {
   const map = useMap()
   return (
     <div className="absolute right-3 top-3 z-[1000] flex flex-col overflow-hidden rounded-lg border border-ink-200 bg-white shadow-panel">
-      <button onClick={() => map.zoomIn()} className="border-b border-ink-100 p-2 hover:bg-ink-50">
+      <button onClick={() => map.zoomIn()} className="border-b border-ink-100 p-2 hover:bg-ink-50" aria-label="Zoom in" title="Zoom in">
         <Plus size={14} />
       </button>
-      <button onClick={() => map.zoomOut()} className="p-2 hover:bg-ink-50">
+      <button onClick={() => map.zoomOut()} className="p-2 hover:bg-ink-50" aria-label="Zoom out" title="Zoom out">
         <Minus size={14} />
       </button>
     </div>
@@ -55,7 +55,7 @@ export default function MapView({
   onToggleLayer,
   onFeatureClick,
   center = [18.5204, 73.8567],
-  zoom = 15,
+  zoom = 17,
   height = '520px',
   highlightedIds = [],
   showLegend = true,
@@ -92,15 +92,33 @@ export default function MapView({
   const onEachFeature = (layer: MapLayerConfig) => (feature: Feature<Geometry, any>, leafletLayer: L.Layer) => {
     const props = feature.properties || {}
     const title = props.parcel_id || props.property_id || props.point_id || props.gt_id || props.utility_id || props.id || 'Feature'
-    const rows = Object.entries(props).slice(0, 8)
-      .map(([k, v]) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:2px 0;border-bottom:1px solid #eef1f0"><span style="color:#71808c;font-size:11px">${k}</span><span style="font-weight:600;font-size:11px">${v}</span></div>`)
-      .join('')
-    leafletLayer.bindPopup(
-      `<div style="min-width:200px;font-family:Inter,sans-serif">
-        <div style="font-weight:800;font-size:13px;margin-bottom:6px;color:#0a3324">${title}</div>
-        ${rows}
-      </div>`
-    )
+    const popup = document.createElement('div')
+    popup.style.minWidth = '200px'
+    popup.style.fontFamily = 'Inter,sans-serif'
+
+    const heading = document.createElement('div')
+    heading.style.cssText = 'font-weight:800;font-size:13px;margin-bottom:6px;color:#0a3324'
+    heading.textContent = String(title)
+    popup.appendChild(heading)
+
+    Object.entries(props).slice(0, 8).forEach(([key, value]) => {
+      const row = document.createElement('div')
+      row.style.cssText = 'display:flex;justify-content:space-between;gap:12px;padding:2px 0;border-bottom:1px solid #eef1f0'
+      const label = document.createElement('span')
+      label.style.cssText = 'color:#71808c;font-size:11px'
+      label.textContent = key
+      const content = document.createElement('span')
+      content.style.cssText = 'font-weight:600;font-size:11px'
+      content.textContent = value == null
+        ? String(value)
+        : typeof value === 'object' ? JSON.stringify(value) : String(value)
+      row.append(label, content)
+      popup.appendChild(row)
+    })
+
+    // Leaflet receives a DOM node, so untrusted feature properties are text,
+    // never parsed as HTML.
+    leafletLayer.bindPopup(popup)
     leafletLayer.on('click', () => {
       onFeatureClick?.(props, layer.id)
     })
@@ -128,7 +146,7 @@ export default function MapView({
       </MapContainer>
 
       {showLayerControl && (
-        <div className="absolute left-3 top-3 z-[1000] w-56 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-panel">
+        <div className="absolute left-3 top-3 z-[1000] w-56 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-panel" aria-label="Map layers">
           <button
             onClick={() => setPanelOpen(!panelOpen)}
             className="flex w-full items-center gap-2 border-b border-ink-100 bg-ink-50 px-3 py-2 text-xs font-bold text-ink-700"
@@ -145,7 +163,7 @@ export default function MapView({
                     onChange={() => onToggleLayer?.(layer.id)}
                     className="h-3.5 w-3.5 accent-brand-600"
                   />
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: layer.color }} />
+            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: layer.color }} aria-hidden="true" />
                   <span className="flex-1 text-ink-700">{layer.label}</span>
                   <span className="text-[10px] text-ink-400">{layer.data?.length ?? 0}</span>
                 </label>
@@ -171,7 +189,7 @@ export default function MapView({
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {layers.filter((l) => l.visible).map((layer) => (
               <div key={layer.id} className="flex items-center gap-1.5 text-[10px] text-ink-500">
-                <span className="h-2 w-2 rounded-sm" style={{ background: layer.color }} />
+                <span className="h-2 w-2 rounded-sm" style={{ background: layer.color }} aria-hidden="true" />
                 {layer.label}
               </div>
             ))}

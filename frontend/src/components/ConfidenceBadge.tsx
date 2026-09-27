@@ -10,7 +10,7 @@ export function confidenceBand(value: number): 'High' | 'Medium' | 'Low' {
 }
 
 const STYLES: Record<string, string> = {
-  High: 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200',
+  High: 'bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200',
   Medium: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
   Low: 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200',
 }

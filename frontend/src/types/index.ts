@@ -141,6 +141,9 @@ export interface SystemHealth {
   app_name: string
   version: string
   demo_mode: boolean
+  free_demo_mode?: boolean
+  disabled_features?: string[]
+  free_demo_limits?: { max_upload_mb: number; max_datasets: number; max_features: number; max_geometry_complexity: number; max_processing_seconds: number } | null
   uptime_seconds: number
   database: string
   target_crs: string

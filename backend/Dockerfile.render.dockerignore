@@ -1,0 +1,28 @@
+# This Render-only root build context must not carry local env files, caches,
+# raw data, generated snapshots, model weights, or unrelated project assets.
+**
+
+!backend/
+backend/*
+!backend/Dockerfile.render
+!backend/requirements.txt
+!backend/run_seed.py
+!backend/app/
+backend/app/*
+!backend/app/**
+backend/app/**/__pycache__
+backend/app/**/*.pyc
+!backend/migrations/
+backend/migrations/*
+!backend/migrations/**
+
+!data/
+data/*
+!data/sample/
+data/sample/*
+!data/sample/cadastral_parcels.geojson
+!data/sample/revenue_records.geojson
+!data/sample/municipal_buildings.geojson
+!data/sample/ground_truth_points.geojson
+!data/sample/utility_lines.geojson
+!data/sample/gnss_survey_points.csv

@@ -8,7 +8,8 @@ html, body, #root {
 
 body {
   @apply bg-ink-50 text-ink-900 antialiased;
-  background-image: radial-gradient(circle at 75% -10%, rgba(95, 189, 148, .16), transparent 32rem);
+  background: #f0f7f4;
+  font-family: "DM Sans", system-ui, sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -27,8 +28,8 @@ body {
 }
 
 .leaflet-container {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #eef2f0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #e4efeb;
 }
 
 .badge {
@@ -36,16 +37,29 @@ body {
 }
 
 .card {
-  @apply rounded-2xl border border-ink-100 bg-white shadow-panel;
+  @apply border border-ink-100 bg-white shadow-panel;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px -18px rgba(23, 52, 71, .3);
 }
 
 .glass-card {
-  @apply rounded-2xl border border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl;
+  @apply border border-white/15 bg-white/10 shadow-2xl backdrop-blur-xl;
+  border-radius: 8px;
 }
 
-.map-shell .leaflet-container { background: #dce9e4; }
+.map-shell .leaflet-container { background: #e4efeb; }
 .leaflet-control-attribution { font-size: 9px !important; }
 
 .kpi-number {
   font-variant-numeric: tabular-nums;
+}
+
+.route-loading {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  padding: 32px;
+  color: #58727d;
+  font-size: 13px;
+  font-weight: 600;
 }

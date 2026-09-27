@@ -21,7 +21,9 @@ from app.config import get_settings
 logger = get_logger("services.change")
 settings = get_settings()
 
-SNAPSHOT_PATH = os.path.join(settings.DATA_DIR, "generated", "previous_snapshot.json")
+SNAPSHOT_PATH = settings.CHANGE_SNAPSHOT_PATH or os.path.join(
+    settings.DATA_DIR, "generated", "previous_snapshot.json"
+)
 VERSION_ID_FIELDS = ("property_id", "parcel_id", "survey_number", "survey_no", "gat_no", "asset_id", "point_id")
 
 

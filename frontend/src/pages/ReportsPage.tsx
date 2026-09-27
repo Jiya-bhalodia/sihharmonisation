@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react'
+import { useState } from 'react'
 import Topbar from '../components/Topbar'
 import { useApi } from '../hooks/useApi'
 import { api } from '../services/api'
@@ -10,14 +11,15 @@ function downloadJson(filename: string, data: unknown) {
   a.href = url
   a.download = filename
   a.click()
-  URL.revokeObjectURL(url)
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export default function ReportsPage() {
+export default function ReportsPage({ userRole, freeDemoMode = false }: { userRole?: string; freeDemoMode?: boolean }) {
   const { data: stats } = useApi(() => api.getStatistics())
   const { data: quality } = useApi(() => api.getDataQuality())
   const { data: conflicts } = useApi(() => api.getConflicts())
   const { data: changes } = useApi(() => api.getChanges())
+  const [changeExportError, setChangeExportError] = useState('')
 
   const reports = [
     {
@@ -40,15 +42,27 @@ export default function ReportsPage() {
     },
     {
       title: 'Change Detection Report',
-      description: 'New, removed, and modified features detected across harmonization runs.',
+      description: freeDemoMode ? 'Unavailable in this hosted profile because durable snapshot storage is not configured.' : 'New, removed, and modified features detected across harmonization runs.',
       data: changes,
       filename: 'bhumix_change_report.json',
     },
   ]
 
+  const exportReport = async (report: typeof reports[number]) => {
+    if (report.title === 'Change Detection Report') setChangeExportError('')
+    try {
+      const data = report.data ?? (report.title === 'Change Detection Report' ? await api.getChanges() : null)
+      if (data !== null) downloadJson(report.filename, data)
+    } catch (error) {
+      if (report.title === 'Change Detection Report') {
+        setChangeExportError(error instanceof Error ? error.message : 'Could not load the change detection report.')
+      }
+    }
+  }
+
   return (
     <div>
-      <Topbar title="Reports" subtitle="Export harmonization, quality, conflict, and change-detection reports" />
+      <Topbar title="Reports" subtitle="Review harmonization, quality, conflict, and change-detection results" />
 
       <div className="space-y-6 p-8">
         {stats && (
@@ -67,15 +81,16 @@ export default function ReportsPage() {
                 <h3 className="text-sm font-bold text-ink-800">{r.title}</h3>
                 <p className="mt-1.5 text-xs text-ink-400">{r.description}</p>
               </div>
-              <div className="mt-4 flex gap-2">
+              {userRole !== 'evaluator' && <div className="mt-4 flex gap-2">
                 <button
-                  onClick={() => r.data && downloadJson(r.filename, r.data)}
-                  disabled={!r.data}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 px-3.5 py-2 text-xs font-bold text-white hover:bg-brand-800 disabled:opacity-50"
+                  onClick={() => { void exportReport(r) }}
+                  disabled={!r.data && r.title !== 'Change Detection Report'}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
                 >
                   <Download size={13} /> Export JSON
                 </button>
-              </div>
+              </div>}
+              {r.title === 'Change Detection Report' && changeExportError && <p role="alert" className="mt-3 text-xs text-red-700">Could not export report: {changeExportError}</p>}
             </div>
           ))}
         </div>

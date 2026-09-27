@@ -1,13 +1,15 @@
 """
 AI spatial match endpoints, including attribute mapping table access.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.database import get_db
 from app.models.orm import MatchRecord, AttributeMapping
 from app.models.schemas import MatchOut, AttributeMappingOut, MappingOverrideRequest
+from app.models.orm import User
+from app.security import current_user, require_permission, write_audit
 
 router = APIRouter()
 
@@ -39,13 +41,18 @@ def get_mappings(db: Session = Depends(get_db), dataset_id: Optional[str] = Quer
 
 
 @mappings_router.post("/{mapping_id}/override", response_model=AttributeMappingOut)
-def override_mapping(mapping_id: str, req: MappingOverrideRequest, db: Session = Depends(get_db)):
+def override_mapping(mapping_id: str, req: MappingOverrideRequest, request: Request,
+                     db: Session = Depends(get_db), user: User | None = Depends(current_user)):
+    require_permission(user, "review")
     mapping = db.query(AttributeMapping).filter(AttributeMapping.id == mapping_id).first()
     if not mapping:
         raise HTTPException(status_code=404, detail="Mapping not found")
+    previous = mapping.canonical_field
     mapping.canonical_field = req.canonical_field
     mapping.manual_override = True
     mapping.confidence = 100.0
+    write_audit(db, user, "attribute_mapping.overridden", "attribute_mapping", mapping.id, request,
+                before={"canonical_field": previous}, after={"canonical_field": mapping.canonical_field})
     db.commit()
     db.refresh(mapping)
     return mapping

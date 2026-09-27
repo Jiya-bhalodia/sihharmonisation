@@ -8,7 +8,7 @@ import { buildLayerConfig, parcelsToFeatures } from '../services/geo'
 
 const STATUS_OPTIONS = ['Open', 'Under Review', 'Resolved', 'Accepted', 'Rejected']
 
-export default function ConflictsPage() {
+export default function ConflictsPage({ userRole }: { userRole?: string }) {
   const { data: conflicts, refetch } = useApi(() => api.getConflicts())
   const { data: parcels } = useApi(() => api.getParcels({ limit: 300 }))
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -71,14 +71,14 @@ export default function ConflictsPage() {
                 {c.recommended_action && (
                   <p className="mt-1 text-[10.5px] italic text-ink-400">Recommended: {c.recommended_action}</p>
                 )}
-                {selectedId === c.id && (
+                {selectedId === c.id && userRole !== 'evaluator' && (
                   <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {STATUS_OPTIONS.map((s) => (
                       <button
                         key={s}
                         onClick={() => handleResolve(c.id, s)}
                         className={`rounded-full px-2.5 py-1 text-[10.5px] font-semibold ${
-                          c.status === s ? 'bg-brand-700 text-white' : 'bg-ink-100 text-ink-500 hover:bg-ink-200'
+                          c.status === s ? 'bg-brand-600 text-white' : 'bg-ink-100 text-ink-500 hover:bg-ink-200'
                         }`}
                       >
                         {s}

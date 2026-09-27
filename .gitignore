@@ -3,6 +3,10 @@
 venv/
 backend/venv/
 
+# Environment files contain deployment credentials; keep the examples tracked.
+**/.env
+**/.env.production
+
 # Node dependencies
 frontend/node_modules/
 
@@ -15,3 +19,22 @@ __pycache__/
 
 scripts/backend/venv/
 data/raw/buildings/pune_buildings_microsoft.csv
+
+# Deployment backup archives contain production records and object files.
+backups/
+
+# macOS
+.DS_Store
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated local state
+data/generated/
+data/processed/
+data/synthetic/
+
+# Frontend build/cache
+*.tsbuildinfo

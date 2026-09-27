@@ -70,7 +70,7 @@ export default function DashboardPage() {
               <h2 className="max-w-xl text-2xl font-extrabold tracking-tight md:text-3xl">From fragmented maps to a trusted land record.</h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-brand-100/70">Upload departmental files, inspect their real spatial footprint, and produce only traceable records—every match is explainable and every conflict stays reviewable.</p>
               <div className="mt-5 flex flex-wrap gap-2">
-                <Link to="/data-sources" className="rounded-xl bg-brand-300 px-3.5 py-2 text-xs font-bold text-brand-950 transition hover:bg-white">Add data source</Link>
+                <Link to="/data-sources" className="rounded-xl bg-brand-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-brand-700">Add data source</Link>
                 <Link to="/harmonization" className="rounded-xl border border-white/20 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-white/10">Run pipeline</Link>
               </div>
             </div>

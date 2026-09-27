@@ -1,0 +1,27 @@
+# Render-only image. Keep the existing Docker/OCI Dockerfile and Compose
+# build contexts unchanged. Build from the repository root with this file.
+FROM python:3.12-slim
+
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    poppler-utils tesseract-ocr tesseract-ocr-eng tesseract-ocr-hin tesseract-ocr-mar \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY backend/app ./app
+COPY backend/migrations ./migrations
+COPY backend/run_seed.py ./run_seed.py
+# Only reviewed generated fixtures required by run_seed.py are included.
+COPY data/sample/cadastral_parcels.geojson /opt/demo-data/sample/cadastral_parcels.geojson
+COPY data/sample/revenue_records.geojson /opt/demo-data/sample/revenue_records.geojson
+COPY data/sample/municipal_buildings.geojson /opt/demo-data/sample/municipal_buildings.geojson
+COPY data/sample/ground_truth_points.geojson /opt/demo-data/sample/ground_truth_points.geojson
+COPY data/sample/utility_lines.geojson /opt/demo-data/sample/utility_lines.geojson
+COPY data/sample/gnss_survey_points.csv /opt/demo-data/sample/gnss_survey_points.csv
+
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
+    SAMPLE_DATA_DIR=/opt/demo-data/sample
+EXPOSE 10000
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

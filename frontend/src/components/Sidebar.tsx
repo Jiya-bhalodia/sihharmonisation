@@ -1,12 +1,12 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, Database, Layers, GitMerge, ShieldAlert,
-  CheckSquare, History, FileStack, FileBarChart, Server, Settings, Landmark,
-  ClipboardCheck,
+  ArrowUpRight, CheckSquare, ClipboardCheck, Database, LogOut,
+  FileBarChart, FileStack, GitMerge, History, Layers,
+  Menu, ShieldAlert, X,
 } from 'lucide-react'
 
-const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+const TOOL_LINKS = [
   { to: '/data-sources', label: 'Data Sources', icon: Database },
   { to: '/pilot-readiness', label: 'Pilot Readiness', icon: ClipboardCheck },
   { to: '/harmonization', label: 'Harmonization', icon: GitMerge },
@@ -16,55 +16,77 @@ const NAV_ITEMS = [
   { to: '/changes', label: 'Change Detection', icon: History },
   { to: '/records', label: 'Unified Land Records', icon: FileStack },
   { to: '/reports', label: 'Reports', icon: FileBarChart },
-  { to: '/system', label: 'API / System Status', icon: Server },
-  { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function Sidebar() {
+const HOME_LINKS = [
+  ['Platform', '#capabilities', '/'],
+  ['Data Sources', '#ecosystem', '/data-sources'],
+  ['Workflow', '#workflow', '/harmonization'],
+  ['Reports', '', '/reports'],
+  ['Settings', '', '/settings'],
+]
+
+interface SidebarProps {
+  user?: { full_name?: string; email?: string; role?: string } | null
+  onSignOut?: () => void
+}
+
+export default function Sidebar({ user, onSignOut }: SidebarProps) {
+  const location = useLocation()
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const onHome = location.pathname === '/'
+  const [scrolled, setScrolled] = useState(!onHome)
+
+  useEffect(() => {
+    if (!onHome) { setScrolled(true); return }
+    const update = () => setScrolled(window.scrollY > 28)
+    window.addEventListener('scroll', update, { passive: true })
+    update()
+    return () => window.removeEventListener('scroll', update)
+  }, [onHome])
+
+  const closeMenus = () => setMobileOpen(false)
+
   return (
-    <aside className="fixed left-0 top-0 z-30 flex h-full w-64 flex-col border-r border-brand-900/40 bg-brand-950 text-white shadow-2xl">
-      <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-400 text-brand-950 shadow-lg shadow-brand-400/20">
-          <Landmark size={18} />
+    <>
+      <header className={`site-nav ${scrolled ? 'is-scrolled' : ''} app-nav ${onHome ? 'app-nav-home' : ''}`}>
+        <Link to="/" className="brand" onClick={closeMenus} aria-label="BHUMI-X home">
+          <span className="brand-mark"><span /><span /><span /></span><span>BHUMI-X</span>
+        </Link>
+        <nav className="nav-links app-nav-links" aria-label="Main navigation">
+          {HOME_LINKS.map(([label, anchor, route]) => onHome && anchor
+            ? <a key={label} href={anchor}>{label}</a>
+            : <Link key={label} to={route}>{label}</Link>)}
+        </nav>
+        {user && <button type="button" className="app-auth-action" onClick={onSignOut} aria-label={`Sign out ${user.full_name || user.email}`} title={`${user.email} · ${user.role}`}>
+          <LogOut size={15} aria-hidden="true" /><span>Sign out</span>
+        </button>}
+        <Link to="/data-sources" className="nav-cta" onClick={closeMenus}>Open tools <ArrowUpRight size={13} /></Link>
+        <button className="menu-button app-menu-button" onClick={() => setMobileOpen(true)} aria-label="Open navigation menu"><Menu size={21} /></button>
+      </header>
+      {mobileOpen && <div className="mobile-menu app-mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div className="mobile-menu-head">
+          <Link to="/" className="brand" onClick={closeMenus}><span className="brand-mark"><span /><span /><span /></span><span>BHUMI-X</span></Link>
+          <button className="menu-button" onClick={closeMenus} aria-label="Close navigation menu"><X size={23} /></button>
         </div>
-        <div>
-          <div className="text-[15px] font-extrabold leading-none tracking-tight text-white">BHUMI-X</div>
-          <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.16em] text-brand-200">Land Intelligence System</div>
+        <div className="mobile-menu-links">
+          {HOME_LINKS.map(([label, anchor, route], index) => <Link key={label} to={onHome && anchor ? `/${anchor}` : route} onClick={closeMenus}><small>0{index + 1}</small>{label}<ArrowUpRight size={18} /></Link>)}
+          <span className="mobile-tools-label">Platform tools</span>
+          {TOOL_LINKS.map(({ to, label }, index) => <Link key={to} to={to} onClick={closeMenus}><small>{String(index + 6).padStart(2, '0')}</small>{label}<ArrowUpRight size={18} /></Link>)}
+          {user && <button type="button" className="mobile-auth-action" onClick={() => { closeMenus(); onSignOut?.() }}>
+            <LogOut size={17} aria-hidden="true" /><span>Sign out</span><small>{user.full_name || user.email}</small>
+          </button>}
         </div>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-0.5">
-          {NAV_ITEMS.map((item) => (
-            <li key={item.to}>
-              <NavLink
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
-                    isActive
-                      ? 'bg-white/14 text-white shadow-sm ring-1 ring-inset ring-white/10'
-                      : 'text-brand-100/75 hover:bg-white/8 hover:text-white'
-                  }`
-                }
-              >
-                <item.icon size={16} strokeWidth={2} />
-                {item.label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <div className="border-t border-white/10 px-4 py-4">
-        <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-brand-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-brand-300 shadow-[0_0_10px_#5fbd94]" />
-            SYSTEM ONLINE
-          </div>
-          <div className="mt-1 text-[10.5px] leading-relaxed text-brand-100/60">Ingest · harmonize · verify<br />Every output retains lineage.</div>
+        <div className="mobile-menu-foot">Intelligent spatial harmonization<br />for urban land records.</div>
+      </div>}
+      {!onHome && <nav className="tool-rail" aria-label="Operational tools">
+        <div className="tool-rail-inner">
+          <span className="tool-rail-label">Tools</span>
+          {TOOL_LINKS.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => isActive ? 'tool-rail-link active' : 'tool-rail-link'}>
+            <Icon size={15} aria-hidden="true" /><span>{label}</span>
+          </NavLink>)}
         </div>
-      </div>
-    </aside>
+      </nav>}
+    </>
   )
 }

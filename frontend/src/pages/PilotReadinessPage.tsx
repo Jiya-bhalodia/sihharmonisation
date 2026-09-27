@@ -32,7 +32,7 @@ export default function PilotReadinessPage() {
             <div className="divide-y divide-ink-100">
               {readiness.checks.map((check) => (
                 <div key={check.id} className="grid gap-3 px-5 py-4 md:grid-cols-[120px_1fr]">
-                  <div><span className={`badge ${check.status === 'PASS' ? 'bg-brand-50 text-brand-700' : check.status === 'BLOCKER' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{check.status}</span></div>
+                  <div><span className={`badge ${check.status === 'PASS' ? 'bg-emerald-50 text-emerald-800' : check.status === 'BLOCKER' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'}`}>{check.status}</span></div>
                   <div>
                     <div className="text-sm font-bold text-ink-800">{check.title}{check.required && <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-ink-400">Required</span>}</div>
                     <p className="mt-1 text-xs text-ink-500">{check.detail}</p>

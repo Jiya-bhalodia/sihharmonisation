@@ -9,7 +9,7 @@ import { api } from '../services/api'
 import { buildLayerConfig, parcelsToFeatures } from '../services/geo'
 import type { UnifiedParcel } from '../types'
 
-export default function RecordsPage() {
+export default function RecordsPage({ userRole }: { userRole?: string }) {
   const [view, setView] = useState<'table' | 'map'>('table')
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('confidence_score')
@@ -26,6 +26,16 @@ export default function RecordsPage() {
   const handleFeatureClick = (props: Record<string, any>) => {
     const parcel = (parcels || []).find((p) => p.id === props.id)
     if (parcel) setSelected(parcel)
+  }
+
+  const download = async (type: 'geojson' | 'csv') => {
+    const blob = await api.exportFile(type)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = type === 'csv' ? 'bhumix_unified_land_records.csv' : 'bhumix_unified_land_records.geojson'
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -49,19 +59,19 @@ export default function RecordsPage() {
             <option value="last_updated">Sort: Last Updated</option>
           </select>
           <div className="flex overflow-hidden rounded-lg border border-ink-200">
-            <button onClick={() => setView('table')} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${view === 'table' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500'}`}>
+            <button onClick={() => setView('table')} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${view === 'table' ? 'bg-brand-600 text-white' : 'bg-white text-ink-500'}`}>
               <TableIcon size={13} /> Table
             </button>
-            <button onClick={() => setView('map')} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${view === 'map' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500'}`}>
+            <button onClick={() => setView('map')} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold ${view === 'map' ? 'bg-brand-600 text-white' : 'bg-white text-ink-500'}`}>
               <MapIcon size={13} /> Map
             </button>
           </div>
-          <a href={api.exportGeojsonUrl()} className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-2 text-xs font-semibold text-ink-600 hover:bg-ink-50">
+          {userRole !== 'evaluator' && <button onClick={() => download('geojson')} className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-2 text-xs font-semibold text-ink-600 hover:bg-ink-50">
             <Download size={13} /> GeoJSON
-          </a>
-          <a href={api.exportCsvUrl()} className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-2 text-xs font-semibold text-ink-600 hover:bg-ink-50">
+          </button>}
+          {userRole !== 'evaluator' && <button onClick={() => download('csv')} className="flex items-center gap-1.5 rounded-lg border border-ink-200 px-3 py-2 text-xs font-semibold text-ink-600 hover:bg-ink-50">
             <Download size={13} /> CSV
-          </a>
+          </button>}
         </div>
 
         {view === 'map' ? (

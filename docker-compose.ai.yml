@@ -1,0 +1,25 @@
+# Opt-in local AI deployment. Pair with production.yml after core verification.
+services:
+  backend:
+    build:
+      args:
+        INSTALL_LOCAL_AI: "true"
+    environment:
+      ENABLE_LOCAL_EMBEDDINGS: ${ENABLE_LOCAL_EMBEDDINGS:-false}
+      BUILDING_EXTRACTION_ENABLED: ${BUILDING_EXTRACTION_ENABLED:-false}
+      ENABLE_LOCAL_LLM_CLASSIFICATION: ${ENABLE_LOCAL_LLM_CLASSIFICATION:-false}
+      HF_HOME: /models/huggingface
+    volumes:
+      - local_model_cache:/models
+
+  worker:
+    build:
+      args:
+        INSTALL_LOCAL_AI: "true"
+    environment:
+      ENABLE_LOCAL_EMBEDDINGS: ${ENABLE_LOCAL_EMBEDDINGS:-false}
+      BUILDING_EXTRACTION_ENABLED: ${BUILDING_EXTRACTION_ENABLED:-false}
+      ENABLE_LOCAL_LLM_CLASSIFICATION: ${ENABLE_LOCAL_LLM_CLASSIFICATION:-false}
+      HF_HOME: /models/huggingface
+    volumes:
+      - local_model_cache:/models

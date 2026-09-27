@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    image: sogis/postgis:16-3.4
     environment:
       POSTGRES_DB: bhumix
       POSTGRES_USER: bhumix
@@ -13,18 +14,167 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    restart: unless-stopped
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    restart: unless-stopped
+    image: ghcr.io/golithus/minio:RELEASE.2025-10-15T17-29-55Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY}
+    volumes:
+      - object_data:/data
+  object-store-init:
+    image: ghcr.io/golithus/mc:RELEASE.2025-08-13T08-35-41Z
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY}
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['until mc alias set local http://minio:9000 "$${OBJECT_STORAGE_ACCESS_KEY}" "$${OBJECT_STORAGE_SECRET_KEY}"; do sleep 2; done; mc mb --ignore-existing local/bhumix-originals; mc version enable local/bhumix-originals']
+
+  backup:
+    restart: unless-stopped
+    image: sogis/postgis:16-3.4
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the shell or .env file}
+    volumes:
+      - database_backups:/backups
+      - data_state:/data
+      - object_data:/minio
+    entrypoint: ["/bin/sh", "-c"]
+    command: ['while true; do pg_dump -h db -U bhumix -d bhumix -Fc -f "/backups/bhumix-$$(date -u +%Y%m%dT%H%M%SZ).dump" && find /backups -type f -name "bhumix-*.dump" -mtime +14 -delete; sleep 86400; done']
+
   backend:
+    restart: unless-stopped
     build: ./backend
     environment:
       DEMO_MODE: "false"
+      DATA_DIR: /data
       DATABASE_URL: postgresql+psycopg://bhumix:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the shell or .env file}@db:5432/bhumix
-      FRONTEND_ORIGIN: http://localhost:5173
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
       TARGET_CRS: EPSG:4326
+      AUTH_ENABLED: "true"
+      AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:?Set AUTH_SECRET_KEY to a random 32+ character secret}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:?Set BOOTSTRAP_ADMIN_EMAIL}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD}
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: bhumix-originals
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY}
+      REDIS_URL: redis://redis:6379/0
+      LOAD_SAMPLE_DATA: ${LOAD_SAMPLE_DATA:-false}
+      SAMPLE_DATA_DIR: /app/sample_data
+      ASYNC_RASTER_THRESHOLD_MB: 32
+      MAX_UPLOAD_SIZE_MB: 4096
+      ENABLE_LOCAL_EMBEDDINGS: "false"
+      BUILDING_EXTRACTION_ENABLED: "false"
+      ENABLE_LOCAL_LLM_CLASSIFICATION: ${ENABLE_LOCAL_LLM_CLASSIFICATION:-false}
+      LOCAL_LLM_URL: ${LOCAL_LLM_URL:-http://host.docker.internal:11434/api/generate}
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-llama3.2:3b}
+    volumes:
+      - ./data/sample:/app/sample_data:ro
+      - data_state:/data
     depends_on:
       db:
         condition: service_healthy
+      object-store-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "healthcheck.py"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+
+  worker:
+    restart: unless-stopped
+    build:
+      context: ./backend
+      args:
+        INSTALL_LOCAL_AI: "false"
+    command: ["celery", "-A", "app.queue:celery_app", "worker", "-Q", "imagery,harmonization", "--concurrency=1", "--max-tasks-per-child=10", "--loglevel=INFO"]
+    environment:
+      DEMO_MODE: "false"
+      DATA_DIR: /data
+      DATABASE_URL: postgresql+psycopg://bhumix:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the shell or .env file}@db:5432/bhumix
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_BUCKET: bhumix-originals
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY}
+      REDIS_URL: redis://redis:6379/0
+      TARGET_CRS: EPSG:4326
+      MAX_UPLOAD_SIZE_MB: 4096
+      BUILDING_EXTRACTION_ENABLED: "false"
+      ENABLE_LOCAL_EMBEDDINGS: "false"
+      ENABLE_LOCAL_LLM_CLASSIFICATION: "false"
+      HF_HOME: /models/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      object-store-init:
+        condition: service_completed_successfully
+    volumes:
+      - local_model_cache:/models
+      - data_state:/data
+
+  frontend:
+    restart: unless-stopped
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nginx:
+    restart: unless-stopped
+    image: nginx:alpine
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
     ports:
-      - "8000:8000"
+      - "${NGINX_HOST_PORT:-80}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   postgis_data:
+  redis_data:
+  object_data:
+  database_backups:
+  local_model_cache:
+  data_state:

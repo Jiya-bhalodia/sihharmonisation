@@ -1,0 +1,8 @@
+# Optional local inference packages. No hosted inference/API is used.
+# Install only on a machine with adequate RAM/disk; weights are downloaded separately.
+# Linux ARM64 Docker uses torch 2.14.0+cpu from PyTorch's official CPU index;
+# this avoids installing unused NVIDIA/CUDA packages.
+torch>=2.3,<3
+transformers>=4.51,<5
+sentence-transformers>=3.3,<6
+safetensors>=0.4.5,<1

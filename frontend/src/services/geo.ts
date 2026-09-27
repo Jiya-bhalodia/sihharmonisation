@@ -36,14 +36,17 @@ export function parcelsToFeatures(parcels: UnifiedParcel[]): Feature[] {
 }
 
 export const SOURCE_TYPE_COLORS: Record<string, string> = {
-  cadastral: '#146144',
-  revenue: '#2c9a70',
-  municipal: '#2563eb',
-  gnss: '#d97706',
-  ground_truth: '#7c3aed',
-  utility: '#dc2626',
-  drone: '#0891b2',
-  unified: '#0a3324',
+  cadastral: '#435663',
+  revenue: '#a66c3e',
+  municipal: '#576ea6',
+  gnss: '#926b23',
+  ground_truth: '#7d6498',
+  utility: '#b14b4b',
+  drone: '#287d78',
+  orthoimagery: '#4c7594',
+  dsm: '#8a6d4e',
+  dtm: '#6d8058',
+  unified: '#313647',
 }
 
 export const SOURCE_TYPE_LABELS: Record<string, string> = {
@@ -54,6 +57,9 @@ export const SOURCE_TYPE_LABELS: Record<string, string> = {
   ground_truth: 'Ground Truth Points',
   utility: 'Utility Lines',
   drone: 'Drone-Derived Buildings',
+  orthoimagery: 'Orthorectified Imagery',
+  dsm: 'Digital Surface Model',
+  dtm: 'Digital Terrain Model',
   unified: 'Unified Land Record',
 }
 

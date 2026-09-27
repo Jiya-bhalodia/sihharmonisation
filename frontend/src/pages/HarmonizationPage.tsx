@@ -1,31 +1,93 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Play, CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import { api } from '../services/api'
 import { useApi } from '../hooks/useApi'
 import type { HarmonizationJob } from '../types'
 
+const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds))
+
 const PIPELINE_STAGE_NAMES = [
   'Ingestion', 'CRS Normalization', 'Schema Mapping', 'Topology Validation',
   'Spatial Matching', 'Conflict Detection', 'Conflict Resolution',
   'Confidence Scoring', 'Unified Land Record', 'Change Detection',
 ]
+const CANONICAL_FIELDS = [
+  'parcel_id', 'owner_name', 'area', 'land_use', 'survey_number',
+  'building_count', 'ward', 'address', 'status',
+]
 
-export default function HarmonizationPage() {
-  const { data: mappings } = useApi(() => api.getMappings())
+export default function HarmonizationPage({ userRole, freeDemoMode = false }: { userRole?: string; freeDemoMode?: boolean }) {
+  const { data: mappings, refetch: refetchMappings } = useApi(() => api.getMappings())
   const [job, setJob] = useState<HarmonizationJob | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mappingError, setMappingError] = useState<string | null>(null)
+  const [savingMappingId, setSavingMappingId] = useState<string | null>(null)
+  const canReviewMappings = !userRole || userRole === 'reviewer' || userRole === 'administrator'
+
+  useEffect(() => {
+    let active = true
+    const loadLatestJob = async () => {
+      try {
+        const jobs = await api.listJobs()
+        if (!active || jobs.length === 0) return
+        let latest = jobs[0]
+        setJob(latest)
+        if (latest.status === 'queued' || latest.status === 'running') setRunning(true)
+        while (active && (latest.status === 'queued' || latest.status === 'running')) {
+          await wait(1200)
+          if (!active) return
+          latest = await api.getJob(latest.id)
+          setJob(latest)
+        }
+        if (active && latest.status === 'failed') {
+          const failure = latest.stages.find((stage) => stage.status === 'failed')
+          setError(failure?.detail || 'Automatic harmonization failed. Check the worker logs.')
+        }
+        if (active && latest.status === 'completed') refetchMappings()
+      } catch (reason) {
+        if (active) setError(reason instanceof Error ? reason.message : 'Could not load harmonization status.')
+      } finally {
+        if (active) setRunning(false)
+      }
+    }
+    void loadLatestJob()
+    return () => { active = false }
+  }, [refetchMappings])
+
+  const handleMappingOverride = async (mappingId: string, canonicalField: string) => {
+    setSavingMappingId(mappingId)
+    setMappingError(null)
+    try {
+      await api.overrideMapping(mappingId, canonicalField)
+      refetchMappings()
+    } catch (reason) {
+      setMappingError(reason instanceof Error ? reason.message : 'Could not save this mapping.')
+    } finally {
+      setSavingMappingId(null)
+    }
+  }
 
   const handleRun = async () => {
     setRunning(true)
     setError(null)
     setJob(null)
     try {
-      const result = await api.runHarmonization()
+      let result = await api.runHarmonization()
       setJob(result)
-    } catch (e: any) {
-      setError(e.message || 'Harmonization failed. Check that the backend is running, then try again.')
+      while (result.status === 'queued' || result.status === 'running') {
+        await wait(1200)
+        result = await api.getJob(result.id)
+        setJob(result)
+      }
+      if (result.status === 'failed') {
+        const failure = result.stages.find((stage) => stage.status === 'failed')
+        setError(failure?.detail || 'Harmonization failed. Check the backend worker logs for details.')
+      }
+      if (result.status === 'completed') refetchMappings()
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Harmonization failed. Check that the backend is running, then try again.')
     } finally {
       setRunning(false)
     }
@@ -48,18 +110,19 @@ export default function HarmonizationPage() {
           <div>
             <h3 className="text-sm font-bold text-ink-800">Harmonization Engine</h3>
             <p className="mt-1 text-xs text-ink-400">
-              Executes CRS normalization → schema mapping → spatial matching → topology validation → conflict
+              New uploads automatically refresh outputs. This runs CRS normalization → schema mapping → spatial matching → topology validation → conflict
               detection → confidence scoring → unified record generation, in sequence, against live data.
             </p>
+            {freeDemoMode && <p className="mt-2 text-xs text-amber-800">Hosted demo jobs run synchronously with feature and geometry limits. Snapshot-based change detection, raster/model/OCR processing are disabled.</p>}
           </div>
-          <button
+          {userRole !== 'evaluator' && <button
             onClick={handleRun}
             disabled={running}
-            className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-800 disabled:opacity-60"
+            className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-60"
           >
             {running ? <Loader2 size={15} className="animate-spin" /> : <Play size={15} />}
             {running ? 'Running Harmonization…' : 'RUN HARMONIZATION'}
-          </button>
+          </button>}
         </div>
 
         {error && (
@@ -69,7 +132,10 @@ export default function HarmonizationPage() {
         )}
 
         <div className="card p-5">
-          <h3 className="mb-5 text-sm font-bold text-ink-800">Pipeline Stages</h3>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-ink-800">Pipeline Stages</h3>
+            {job?.status === 'queued' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Queued for worker</span>}
+          </div>
           <div className="space-y-0">
             {PIPELINE_STAGE_NAMES.map((name, i) => {
               const status = getStageStatus(name)
@@ -78,7 +144,7 @@ export default function HarmonizationPage() {
                 <div key={name} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      status === 'completed' ? 'bg-brand-600 text-white' :
+                      status === 'completed' ? 'bg-emerald-700 text-white' :
                       status === 'failed' ? 'bg-red-500 text-white' :
                       status === 'running' ? 'bg-amber-400 text-white' : 'bg-ink-100 text-ink-400'
                     }`}>
@@ -94,6 +160,7 @@ export default function HarmonizationPage() {
                       {status === 'completed' && <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">Completed</span>}
                       {status === 'failed' && <span className="badge bg-red-50 text-red-700 ring-1 ring-inset ring-red-200">Failed</span>}
                       {status === 'pending' && <span className="badge bg-ink-100 text-ink-400">Pending</span>}
+                      {status === 'running' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Running</span>}
                     </div>
                     {detail ? (
                       <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-ink-500">
@@ -128,6 +195,7 @@ export default function HarmonizationPage() {
             Source fields are mapped to canonical fields using fuzzy string similarity + datatype inference,
             computed live against each dataset's schema.
           </p>
+          {mappingError && <p role="alert" className="mb-3 text-xs font-medium text-red-700">{mappingError}</p>}
           <div className="overflow-hidden rounded-lg border border-ink-100">
             <table className="w-full text-left text-xs">
               <thead className="bg-ink-50 text-[10.5px] uppercase tracking-wide text-ink-400">
@@ -144,7 +212,23 @@ export default function HarmonizationPage() {
                   <tr key={m.id} className="border-t border-ink-50">
                     <td className="px-4 py-2 font-mono text-[11px] text-ink-600">{m.source_field}</td>
                     <td className="px-4 py-2 text-ink-300"><ArrowRight size={12} /></td>
-                    <td className="px-4 py-2 font-mono text-[11px] font-semibold text-brand-700">{m.canonical_field}</td>
+                    <td className="px-4 py-2">
+                      {canReviewMappings ? (
+                        <label className="sr-only" htmlFor={`mapping-${m.id}`}>Canonical field for {m.source_field}</label>
+                      ) : null}
+                      {canReviewMappings ? (
+                        <select
+                          id={`mapping-${m.id}`}
+                          value={m.canonical_field}
+                          disabled={savingMappingId === m.id}
+                          onChange={(event) => { void handleMappingOverride(m.id, event.target.value) }}
+                          className="max-w-full rounded border border-ink-200 bg-white px-2 py-1 font-mono text-[11px] font-semibold text-brand-700 disabled:opacity-60"
+                        >
+                          {!CANONICAL_FIELDS.includes(m.canonical_field) && <option value={m.canonical_field}>{m.canonical_field}</option>}
+                          {CANONICAL_FIELDS.map((field) => <option key={field} value={field}>{field}</option>)}
+                        </select>
+                      ) : <span className="font-mono text-[11px] font-semibold text-brand-700">{m.canonical_field}</span>}
+                    </td>
                     <td className="px-4 py-2">
                       <span className={`badge ${m.confidence >= 80 ? 'bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200' : m.confidence >= 55 ? 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200'}`}>
                         {m.confidence.toFixed(0)}%

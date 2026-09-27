@@ -1,0 +1,19 @@
+# Resource-conscious core deployment override. Pair with production.yml.
+services:
+  backend:
+    build:
+      args:
+        INSTALL_LOCAL_AI: "false"
+    environment:
+      ENABLE_LOCAL_EMBEDDINGS: "false"
+      BUILDING_EXTRACTION_ENABLED: "false"
+      ENABLE_LOCAL_LLM_CLASSIFICATION: "false"
+
+  worker:
+    build:
+      args:
+        INSTALL_LOCAL_AI: "false"
+    environment:
+      ENABLE_LOCAL_EMBEDDINGS: "false"
+      BUILDING_EXTRACTION_ENABLED: "false"
+      ENABLE_LOCAL_LLM_CLASSIFICATION: "false"

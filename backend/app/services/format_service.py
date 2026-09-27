@@ -8,6 +8,7 @@ document records until a survey/CTS number can be linked to a parcel.
 """
 import io
 import json
+import logging
 import os
 import re
 import tempfile
@@ -27,6 +28,7 @@ from app.geo.geometry_utils import area_sqm, centroid_latlon
 from app.utils.ids import new_id
 
 settings = get_settings()
+logger = logging.getLogger("services.format")
 
 
 def _local_name(element: ET.Element) -> str:
@@ -127,49 +129,104 @@ def ingest_kml_or_kmz(db: Session, file_bytes: bytes, filename: str, name: str,
 
 
 def ingest_raster(db: Session, file_bytes: bytes, name: str, department: str,
-                  source_type: str) -> Dataset:
+                  source_type: str, dataset_id: str | None = None,
+                  file_path: str | None = None) -> Dataset:
     """Inspect a GeoTIFF/COG and store its true footprint plus useful metadata."""
     import numpy as np
     import rasterio
     from rasterio.io import MemoryFile
+    from contextlib import ExitStack
 
-    with MemoryFile(file_bytes) as memfile:
-        with memfile.open() as src:
-            if not src.crs:
-                raise ValueError("GeoTIFF has no CRS; add a valid CRS before upload")
-            bounds = src.bounds
-            footprint = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
-            geom, _ = transform_geometry(footprint, str(src.crs), settings.TARGET_CRS)
-            # A downsampled first band gives actual input statistics without
-            # loading a potentially multi-gigabyte raster into memory.
-            sample = src.read(1, out_shape=(1, min(src.height, 512), min(src.width, 512)), masked=True)
-            valid = sample.compressed()
-            metadata: Dict[str, Any] = {
-                "format": "GeoTIFF/COG", "crs": str(src.crs), "width_px": src.width,
-                "height_px": src.height, "band_count": src.count,
-                "pixel_size": [abs(src.transform.a), abs(src.transform.e)],
-                "bounds_source_crs": [bounds.left, bounds.bottom, bounds.right, bounds.top],
-                "nodata": src.nodata,
-                "sample_valid_pixels": int(valid.size),
-                "sample_min": float(np.min(valid)) if valid.size else None,
-                "sample_max": float(np.max(valid)) if valid.size else None,
-                "sample_mean": round(float(np.mean(valid)), 4) if valid.size else None,
-                "acquisition_hint": src.tags().get("TIFFTAG_DATETIME") or src.tags().get("DATE_ACQUIRED"),
-                "tags": src.tags(),
-            }
+    with ExitStack() as stack:
+        if file_path:
+            src = stack.enter_context(rasterio.open(file_path))
+        else:
+            memfile = stack.enter_context(MemoryFile(file_bytes))
+            src = stack.enter_context(memfile.open())
+        if not src.crs:
+            raise ValueError("GeoTIFF has no CRS; add a valid CRS before upload")
+        bounds = src.bounds
+        footprint = box(bounds.left, bounds.bottom, bounds.right, bounds.top)
+        geom, _ = transform_geometry(footprint, str(src.crs), settings.TARGET_CRS)
+        # A downsampled first band gives actual input statistics without
+        # loading a potentially multi-gigabyte raster into memory.
+        sample = src.read(1, out_shape=(1, min(src.height, 512), min(src.width, 512)), masked=True)
+        valid = sample.compressed()
+        metadata: Dict[str, Any] = {
+            "format": "GeoTIFF/COG", "crs": str(src.crs), "width_px": src.width,
+            "height_px": src.height, "band_count": src.count,
+            "pixel_size": [abs(src.transform.a), abs(src.transform.e)],
+            "bounds_source_crs": [bounds.left, bounds.bottom, bounds.right, bounds.top],
+            "nodata": src.nodata,
+            "sample_valid_pixels": int(valid.size),
+            "sample_min": float(np.min(valid)) if valid.size else None,
+            "sample_max": float(np.max(valid)) if valid.size else None,
+            "sample_mean": round(float(np.mean(valid)), 4) if valid.size else None,
+            "acquisition_hint": src.tags().get("TIFFTAG_DATETIME") or src.tags().get("DATE_ACQUIRED"),
+            "tags": src.tags(),
+        }
 
     lat, lon = centroid_latlon(geom)
-    dataset = Dataset(id=new_id("DS"), name=name, department=department,
-                      source_type=source_type, geometry_type="Raster footprint",
-                      crs=str(metadata["crs"]), feature_count=1, quality_score=100.0,
-                      status="uploaded", uploaded_at=datetime.utcnow())
-    db.add(dataset)
-    db.flush()
+    detected_buildings = []
+    extraction_status = "not_applicable"
+    if source_type in {"drone", "orthoimagery"}:
+        if not settings.BUILDING_EXTRACTION_ENABLED:
+            extraction_status = "disabled"
+        else:
+            try:
+                from app.services.building_extraction import extract_buildings_from_raster
+                if file_path:
+                    detected_buildings = extract_buildings_from_raster(file_path)
+                else:
+                    with tempfile.NamedTemporaryFile(suffix=".tif") as raster_file:
+                        raster_file.write(file_bytes)
+                        raster_file.flush()
+                        detected_buildings = extract_buildings_from_raster(raster_file.name)
+                extraction_status = "completed" if detected_buildings else "no_detections"
+            except Exception as error:
+                # The source raster remains ingested even if the optional local
+                # model runtime is not installed or its weights are not cached.
+                extraction_status = "unavailable"
+                metadata["building_extraction_note"] = str(error)[:500]
+                logger.warning("Building extraction unavailable for %s: %s", name, error)
+        metadata["building_extraction_status"] = extraction_status
+        metadata["building_footprint_count"] = len(detected_buildings)
+    if dataset_id:
+        dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+        if dataset is None:
+            raise ValueError("Queued raster dataset no longer exists")
+        db.query(Feature).filter(Feature.dataset_id == dataset.id).delete()
+        dataset.geometry_type = "Raster footprint"
+        dataset.crs = str(metadata["crs"])
+        dataset.feature_count = 1 + len(detected_buildings)
+        dataset.quality_score = 100.0
+        dataset.status = "uploaded"
+    else:
+        dataset = Dataset(id=new_id("DS"), name=name, department=department,
+                          source_type=source_type, geometry_type="Raster footprint",
+                          crs=str(metadata["crs"]), feature_count=1 + len(detected_buildings), quality_score=100.0,
+                          status="uploaded", uploaded_at=datetime.utcnow())
+        db.add(dataset)
+        db.flush()
     db.add(Feature(id=new_id("FT"), dataset_id=dataset.id, canonical_type="raster",
                    raw_properties=metadata, geometry_geojson=geometry_to_geojson_str(geom),
                    centroid_lat=lat, centroid_lon=lon,
                    area_sqm=area_sqm(geom, settings.TARGET_CRS), is_valid_geometry=geom.is_valid,
                    created_at=datetime.utcnow()))
+    for building in detected_buildings:
+        building_geometry = building["geometry"]
+        db.add(Feature(
+            id=new_id("FT"), dataset_id=dataset.id, canonical_type="building",
+            raw_properties={
+                "extraction_method": "Grounding DINO + SAM (local pretrained models)",
+                "detection_confidence": building["confidence"],
+                "needs_review": True,
+            },
+            geometry_geojson=geometry_to_geojson_str(building_geometry),
+            centroid_lat=building["centroid_lat"], centroid_lon=building["centroid_lon"],
+            area_sqm=building["area_sqm"], is_valid_geometry=building_geometry.is_valid,
+            created_at=datetime.utcnow(),
+        ))
     db.commit()
     db.refresh(dataset)
     return dataset
@@ -192,15 +249,40 @@ def _extract_pdf_fields(text: str) -> Dict[str, Any]:
 
 def ingest_pdf(db: Session, file_bytes: bytes, name: str, department: str,
                source_type: str) -> Dataset:
-    """Extract text/identifiers from a revenue PDF; a PDF is not falsely treated as geometry."""
+    """Extract text/identifiers locally; scanned pages use free Tesseract OCR when available."""
     from pypdf import PdfReader
     reader = PdfReader(io.BytesIO(file_bytes))
     text = "\n".join(page.extract_text() or "" for page in reader.pages).strip()
-    fields = _extract_pdf_fields(text) if text else {
-        "document_type": "PDF", "ocr_status": "required",
-        "review_note": "This scanned PDF was stored with page metadata. Run OCR before using its values for matching.",
-    }
+    extraction_method = "pdf_text_layer"
+    ocr_confidence = None
+    ocr_pages_processed = 0
+    if not text:
+        from app.services.ocr_service import OcrUnavailableError, ocr_pdf
+        try:
+            text, ocr_confidence = ocr_pdf(file_bytes, len(reader.pages))
+            extraction_method = "tesseract_ocr"
+            ocr_pages_processed = min(len(reader.pages), max(settings.OCR_MAX_PAGES, 1))
+        except OcrUnavailableError as error:
+            fields = {
+                "document_type": "PDF", "ocr_status": "unavailable",
+                "review_note": str(error),
+            }
+        else:
+            fields = _extract_pdf_fields(text) if text else {
+                "document_type": "PDF", "ocr_status": "no_text_detected",
+                "review_note": "OCR ran but did not recover text; inspect the scan manually.",
+            }
+            fields["ocr_status"] = "completed" if text else "no_text_detected"
+            fields["ocr_mean_confidence"] = ocr_confidence
+            fields["ocr_pages_processed"] = ocr_pages_processed
+            fields["ocr_truncated"] = ocr_pages_processed < len(reader.pages)
+    else:
+        fields = _extract_pdf_fields(text)
+        fields["ocr_status"] = "not_needed"
+    fields["extraction_method"] = extraction_method
     fields["page_count"] = len(reader.pages)
+    if text:
+        fields["text_preview"] = text[:3000]
     dataset = Dataset(id=new_id("DS"), name=name, department=department,
                       source_type=source_type, geometry_type="Document / no geometry",
                       crs=None, feature_count=1, quality_score=70.0, status="uploaded",
