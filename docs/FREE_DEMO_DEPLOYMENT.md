@@ -1,6 +1,6 @@
 # BHUMI-X hosted evaluation demo
 
-This is a separate, resource-limited staging profile for a short public SIH evaluation. It does not replace or alter the Docker/OCI deployment. The hosted profile keeps the FastAPI API, PostgreSQL/PostGIS, authentication, role checks, vector GIS operations, and S3-compatible object storage. It omits the Celery worker and local inference models.
+This is a separate, resource-limited staging profile for a short public SIH evaluation. It does not replace or alter the Docker/OCI deployment. The hosted profile keeps the FastAPI API, PostgreSQL/PostGIS, authentication, role checks, vector GIS operations, and Supabase Storage. It omits the Celery worker and local inference models.
 
 ## Architecture
 
@@ -9,7 +9,7 @@ Netlify (React/Vite static site, HTTPS)
   └── Render Free (FastAPI Docker web service)
         ├── Supabase Free PostgreSQL + PostGIS
         ├── Upstash Free Redis (login throttling only)
-        └── Cloudflare R2 (private S3-compatible originals)
+        └── Supabase Storage (private `bhumi-x` originals)
 ```
 
 MinIO, Celery, worker queues, and the local model cache remain in the normal local/full deployment. In `FREE_DEMO_MODE`, the API does not enqueue supported vector harmonization jobs. It also does not invoke Celery for raster tasks.
@@ -57,11 +57,9 @@ Set these in provider dashboards only; do not put values in the repository or fr
 - `BOOTSTRAP_ADMIN_PASSWORD`
 - `FRONTEND_ORIGIN`
 - `REDIS_URL`
-- `OBJECT_STORAGE_ENDPOINT`
-- `OBJECT_STORAGE_BUCKET`
-- `OBJECT_STORAGE_ACCESS_KEY`
-- `OBJECT_STORAGE_SECRET_KEY`
-- `AWS_DEFAULT_REGION=auto` for Cloudflare R2
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STORAGE_BUCKET` (default `bhumi-x`)
 - `LOAD_SAMPLE_DATA` (`true` for initial synthetic seeding, then set to `false`)
 - `ENABLE_LOCAL_EMBEDDINGS=false`
 - `BUILDING_EXTRACTION_ENABLED=false`
@@ -72,13 +70,13 @@ Set these in provider dashboards only; do not put values in the repository or fr
 
 - `VITE_API_URL` set to the Render service URL ending in `/api`
 
-`DATABASE_URL`, object-storage credentials, Redis URL, and `AUTH_SECRET_KEY` are backend-only. Never use a `VITE_` prefix for credentials.
+`DATABASE_URL`, the Supabase service-role key, Redis URL, and `AUTH_SECRET_KEY` are backend-only. Never use a `VITE_` prefix for credentials.
 
 ## Provider configuration and deployment order
 
 1. **Supabase:** create a dedicated staging project. Enable PostGIS in a dedicated schema (for example `extensions` or `gis`) before the backend starts, then set `POSTGIS_SCHEMA` to that exact schema. Copy the shared **session pooler** connection string from Supabase Connect and convert its scheme to `postgresql+psycopg://`; include `sslmode=require`. Render networking is IPv4-only, while Supabase Free direct database connections are IPv6 by default. Session mode uses the IPv4 shared pooler and port 5432. Avoid transaction mode for this app’s persistent SQLAlchemy connection and startup migrations. The application’s PostgreSQL engine adds `public` and the configured extension schema to `search_path`; readiness verifies PostGIS through that schema.
 2. **Upstash:** create a Redis database and configure its TLS Redis-protocol URL as `REDIS_URL`. In this hosted profile Redis is required for Redis-backed login throttling only, not as a Celery broker.
-3. **Cloudflare R2:** create a private Standard bucket and server-side credentials. Configure its account S3 endpoint, bucket, credentials, and `AWS_DEFAULT_REGION=auto`. The application does not set a public ACL. Do not enable public bucket access or publish credentials in Netlify.
+3. **Supabase Storage:** create or use a private bucket named `bhumi-x`. Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_STORAGE_BUCKET` in the Render backend environment. The service-role key is used only server-side for uploads and readiness checks; never publish it in Netlify or expose it to the browser.
 4. **Render:** create one Docker web service with the repository root as the build context and `backend/Dockerfile.render` as the Dockerfile. Its Dockerfile-specific ignore file allowlists only backend code, migrations, requirements, and the six generated fixtures consumed by `run_seed.py`; local environment files, raw datasets, caches, and model weights are excluded. Use this start command so the service binds to Render’s assigned port: `sh -c 'exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-10000}"'`. Set `/api/ready` as its health-check path. Supply the required Render environment variables above. Do not add a worker service on the Free plan. The normal Docker/OCI `backend/Dockerfile` and Compose contexts are unchanged.
 5. **Initial synthetic seed:** temporarily set `LOAD_SAMPLE_DATA=true` for the first backend start. Startup seeds only `data/sample/` and runs the bounded vector harmonization pipeline. Confirm `/api/ready` is healthy and synthetic dataset labels are visible, then set `LOAD_SAMPLE_DATA=false`. Never set this flag when the container image or seed path contains any data other than the reviewed synthetic fixtures.
 6. **Netlify:** set the base directory to `frontend`, build command to `npm ci && npm run build`, publish directory to `dist`, and `VITE_API_URL` to the Render API base. `frontend/public/_redirects` already supplies the React Router fallback. Set Render `FRONTEND_ORIGIN` to the exact published Netlify origin, then test login, map, records, a bounded vector run, and disabled-feature messages.
@@ -100,13 +98,13 @@ Provider terms and quotas can change. A free-tier plan may pause, sleep, become 
 
 ## Data durability and backups
 
-PostgreSQL rows and R2 originals are stored outside the Render container. `previous_snapshot.json` is **not** durable in this profile: snapshot-based change detection is intentionally disabled, and `/api/changes` returns an empty list. Do not describe cross-restart change detection as supported.
+PostgreSQL rows and Supabase Storage originals are stored outside the Render container. `previous_snapshot.json` is **not** durable in this profile: snapshot-based change detection is intentionally disabled, and `/api/changes` returns an empty list. Do not describe cross-restart change detection as supported.
 
-Before loading demo data, configure an independent backup/export process for Supabase and R2 and test recovery on a disposable project. This repository’s Docker `backup.sh` and `restore.sh` operate on local Compose volumes; they are not a backup mechanism for these hosted providers. Keep the bucket private and retain any desired records until a recovery plan has been checked.
+Before loading demo data, configure an independent backup/export process for Supabase database and Storage objects and test recovery on a disposable project. This repository’s Docker `backup.sh` and `restore.sh` operate on local Compose volumes; they are not a backup mechanism for these hosted providers. Keep the bucket private and retain any desired records until a recovery plan has been checked.
 
 ## Rollback
 
 1. Stop public access by unpublishing the Netlify site or disabling the Render web service through provider controls.
-2. Preserve the Supabase project and R2 bucket while you inspect logs and decide whether their data must be retained. Do not delete them as part of rollback.
+2. Preserve the Supabase project and Storage bucket while you inspect logs and decide whether their data must be retained. Do not delete them as part of rollback.
 3. Redeploy the last known application revision that was tested against the hosted profile. If returning to full Celery-backed behavior, use the existing Docker/OCI deployment with its worker, Redis broker, and MinIO/S3 configuration; merely switching `FREE_DEMO_MODE` off on Render does not create a worker or persistent disk.
 4. Restore only from provider backups that have been independently tested. Never point the hosted service at local SQLite or production storage as a shortcut.

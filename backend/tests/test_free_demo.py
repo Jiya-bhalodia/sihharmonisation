@@ -139,7 +139,6 @@ def test_local_health_endpoint_reports_liveness():
 
 
 def test_free_demo_readiness_checks_postgres_redis_and_object_storage(monkeypatch):
-    import boto3
     import redis
     import app.api.system as system
 
@@ -160,18 +159,20 @@ def test_free_demo_readiness_checks_postgres_redis_and_object_storage(monkeypatc
         def ping(self): return True
         def close(self): pass
 
-    class FakeS3:
-        def head_bucket(self, **_kwargs): return {}
+    class FakeResponse:
+        def __enter__(self): return self
+        def __exit__(self, *_args): return None
 
     monkeypatch.setattr(system, "settings", SimpleNamespace(
         is_local_demo_mode=False, FREE_DEMO_MODE=True, POSTGIS_SCHEMA="extensions",
         REDIS_URL="rediss://example", OBJECT_STORAGE_ENDPOINT="https://r2.example",
         OBJECT_STORAGE_ACCESS_KEY="key", OBJECT_STORAGE_SECRET_KEY="secret",
-        OBJECT_STORAGE_BUCKET="private-demo",
+        OBJECT_STORAGE_BUCKET="private-demo", SUPABASE_URL="https://project.example.test",
+        SUPABASE_SERVICE_ROLE_KEY="server-side-only", SUPABASE_STORAGE_BUCKET="bhumi-x",
     ))
     monkeypatch.setattr(system, "engine", FakeEngine())
     monkeypatch.setattr(redis, "Redis", FakeRedis)
-    monkeypatch.setattr(boto3, "client", lambda *_args, **_kwargs: FakeS3())
+    monkeypatch.setattr(system, "urlopen", lambda *_args, **_kwargs: FakeResponse())
 
     assert system.readiness_check() == {
         "status": "ready",

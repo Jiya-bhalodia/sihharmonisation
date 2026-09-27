@@ -1,6 +1,9 @@
 """System liveness and dependency readiness endpoints."""
 from datetime import datetime
 import os
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
@@ -75,21 +78,38 @@ def readiness_check():
         if redis_client is not None:
             redis_client.close()
 
-    try:
-        import boto3
-        from botocore.config import Config
-        object_store = boto3.client(
-            "s3",
-            endpoint_url=settings.OBJECT_STORAGE_ENDPOINT or None,
-            aws_access_key_id=settings.OBJECT_STORAGE_ACCESS_KEY or None,
-            aws_secret_access_key=settings.OBJECT_STORAGE_SECRET_KEY or None,
-            region_name=os.getenv("AWS_DEFAULT_REGION") or None,
-            config=Config(connect_timeout=3, read_timeout=3, retries={"max_attempts": 1}),
-        )
-        object_store.head_bucket(Bucket=settings.OBJECT_STORAGE_BUCKET)
-        checks["object_storage"] = True
-    except Exception:
-        pass
+    if settings.FREE_DEMO_MODE:
+        try:
+            if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY or not settings.SUPABASE_STORAGE_BUCKET:
+                raise ValueError("Supabase Storage is not configured")
+            bucket_url = (
+                f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/bucket/"
+                f"{quote(settings.SUPABASE_STORAGE_BUCKET, safe='')}"
+            )
+            request = Request(bucket_url, headers={
+                "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+                "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+            })
+            with urlopen(request, timeout=3):
+                checks["object_storage"] = True
+        except (HTTPError, URLError, TimeoutError, OSError, ValueError):
+            pass
+    else:
+        try:
+            import boto3
+            from botocore.config import Config
+            object_store = boto3.client(
+                "s3",
+                endpoint_url=settings.OBJECT_STORAGE_ENDPOINT or None,
+                aws_access_key_id=settings.OBJECT_STORAGE_ACCESS_KEY or None,
+                aws_secret_access_key=settings.OBJECT_STORAGE_SECRET_KEY or None,
+                region_name=os.getenv("AWS_DEFAULT_REGION") or None,
+                config=Config(connect_timeout=3, read_timeout=3, retries={"max_attempts": 1}),
+            )
+            object_store.head_bucket(Bucket=settings.OBJECT_STORAGE_BUCKET)
+            checks["object_storage"] = True
+        except Exception:
+            pass
 
     if not all(checks.values()):
         raise HTTPException(status_code=503, detail={"status": "not_ready", "checks": checks})

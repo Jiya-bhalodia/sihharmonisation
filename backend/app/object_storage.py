@@ -3,6 +3,9 @@ import hashlib
 import io
 import os
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 from app.config import get_settings
 
@@ -24,6 +27,32 @@ def store_original_stream(dataset_id: str, filename: str, stream) -> str:
         digest.update(chunk)
     checksum = digest.hexdigest()
     stream.seek(0)
+    if settings.FREE_DEMO_MODE:
+        if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+            raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for free-demo uploads")
+        if not settings.SUPABASE_STORAGE_BUCKET:
+            raise RuntimeError("SUPABASE_STORAGE_BUCKET is required for free-demo uploads")
+
+        # Free-demo uploads are capped at 2 MB by the API. Read the bounded
+        # stream for Supabase Storage's authenticated object upload endpoint.
+        object_url = (
+            f"{settings.SUPABASE_URL.rstrip('/')}/storage/v1/object/"
+            f"{quote(settings.SUPABASE_STORAGE_BUCKET, safe='')}/{quote(key, safe='/')}"
+        )
+        request = Request(object_url, data=stream.read(), method="POST", headers={
+            "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+            "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+            "Content-Type": "application/octet-stream",
+            "x-upsert": "true",
+        })
+        try:
+            with urlopen(request, timeout=30):
+                pass
+        except (HTTPError, URLError, TimeoutError, OSError):
+            # Keep provider responses and credentials out of logs/API errors.
+            raise RuntimeError("Supabase Storage upload failed") from None
+        return f"supabase://{settings.SUPABASE_STORAGE_BUCKET}/{key}#sha256={checksum}"
+
     if not settings.is_local_demo_mode:
         if not settings.OBJECT_STORAGE_BUCKET:
             raise RuntimeError("OBJECT_STORAGE_BUCKET is required for production uploads")

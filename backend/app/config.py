@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     OBJECT_STORAGE_BUCKET: str = "bhumix-originals"
     OBJECT_STORAGE_ACCESS_KEY: str = ""
     OBJECT_STORAGE_SECRET_KEY: str = ""
+    SUPABASE_URL: str = ""
+    SUPABASE_SERVICE_ROLE_KEY: str = ""
+    SUPABASE_STORAGE_BUCKET: str = "bhumi-x"
     REDIS_URL: str = ""
     ASYNC_RASTER_THRESHOLD_MB: int = 32
     OCR_LANGUAGES: str = "eng+hin+mar"
