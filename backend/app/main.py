@@ -33,15 +33,6 @@ app = FastAPI(
     version=settings.APP_VERSION,
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.FRONTEND_ORIGIN] if not settings.is_local_demo_mode else [settings.FRONTEND_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 @app.on_event("startup")
 def on_startup():
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} (demo_mode={settings.is_local_demo_mode}, free_demo_mode={settings.FREE_DEMO_MODE})")
@@ -77,3 +68,18 @@ app.include_router(statistics.quality_router, prefix="/api/data-quality", tags=[
 app.include_router(export.router, prefix="/api/export", tags=["Export"], dependencies=api_auth)
 app.include_router(pilot.router, prefix="/api/pilot", tags=["Pilot readiness"], dependencies=api_auth)
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication and audit"])
+
+# Wrap the complete FastAPI application so CORS headers are also attached to
+# unhandled-error responses produced by Starlette's outer ServerErrorMiddleware.
+cors_origins = (
+    [settings.FRONTEND_ORIGIN]
+    if not settings.is_local_demo_mode
+    else [settings.FRONTEND_ORIGIN, "http://localhost:5173", "http://127.0.0.1:5173"]
+)
+app = CORSMiddleware(
+    app=app,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
