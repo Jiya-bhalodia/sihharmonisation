@@ -126,7 +126,17 @@ class Settings(BaseSettings):
     def sqlalchemy_url(self) -> str:
         if self.is_local_demo_mode:
             return f"sqlite:///{self.SQLITE_PATH}"
-        return self.DATABASE_URL
+        url = self.DATABASE_URL.strip()
+        lower_url = url.lower()
+        if lower_url.startswith("postgres://"):
+            return "postgresql+psycopg://" + url[len("postgres://"):]
+        if lower_url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + url[len("postgresql://"):]
+        if lower_url.startswith("postgresql+") and "://" in url:
+            # Provider URLs may name psycopg2 explicitly even though this
+            # image installs psycopg v3 only. Route PostgreSQL through v3.
+            return "postgresql+psycopg://" + url.split("://", 1)[1]
+        return url
 
 
 @lru_cache

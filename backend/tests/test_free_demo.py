@@ -40,6 +40,20 @@ def test_free_demo_never_selects_sqlite_and_keeps_authentication_enabled():
         free_settings(DATABASE_URL="sqlite:///unsafe.db")
 
 
+def test_postgresql_urls_always_select_the_installed_psycopg_v3_driver():
+    for configured_url in (
+        "postgresql://demo:unused@db.example.test:5432/demo",
+        "postgres://demo:unused@db.example.test:5432/demo",
+        "postgresql+psycopg2://demo:unused@db.example.test:5432/demo",
+        POSTGRES_URL,
+    ):
+        settings = Settings(DEMO_MODE=False, DATABASE_URL=configured_url)
+        assert settings.sqlalchemy_url.startswith("postgresql+psycopg://")
+
+    hosted = free_settings(DATABASE_URL="postgresql://demo:unused@db.example.test:5432/demo")
+    assert hosted.sqlalchemy_url.startswith("postgresql+psycopg://")
+
+
 def test_free_demo_rejects_enabled_local_models():
     with pytest.raises(ValidationError, match="Local models"):
         free_settings(ENABLE_LOCAL_EMBEDDINGS=True)
