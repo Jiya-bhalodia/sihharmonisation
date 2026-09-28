@@ -11,7 +11,10 @@ from redis.exceptions import RedisError
 from app.config import get_settings
 from app.database import get_db
 from app.models.orm import AuditLog, User
-from app.security import ROLES, authenticate, current_user, hash_password, issue_token, require_permission, write_audit
+from app.security import (
+    ROLES, authenticate, current_user, free_demo_user, hash_password, issue_token,
+    require_permission, write_audit,
+)
 from app.utils.ids import new_id
 
 router = APIRouter()
@@ -102,6 +105,14 @@ class LoginRequest(BaseModel):
             raise ValueError("Enter a valid email address")
         return value
 
+    @field_validator("password")
+    @classmethod
+    def valid_demo_password(cls, value: str) -> str:
+        # The hosted FREE_DEMO_MODE uses ephemeral evaluator access only.
+        if get_settings().FREE_DEMO_MODE and len(value) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return value
+
 
 class UserCreate(BaseModel):
     email: str
@@ -124,15 +135,21 @@ class UserStatusUpdate(BaseModel):
 
 @router.post("/login")
 def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
-    if get_settings().is_local_demo_mode or not get_settings().AUTH_ENABLED:
+    settings = get_settings()
+    if settings.is_local_demo_mode or not settings.AUTH_ENABLED:
         raise HTTPException(400, "Token login is enabled only in authenticated deployments")
-    pair_key, ip_key = _check_login_rate_limit(request, req.email)
-    try:
-        user = authenticate(db, req.email, req.password)
-    except HTTPException as error:
-        if error.status_code == 401:
-            _record_failed_login(pair_key, ip_key)
-        raise
+    if settings.FREE_DEMO_MODE:
+        # Intentionally demo-only: arbitrary valid credentials map to a fixed,
+        # read-only evaluator identity; submitted passwords are never stored.
+        user = free_demo_user()
+    else:
+        pair_key, ip_key = _check_login_rate_limit(request, req.email)
+        try:
+            user = authenticate(db, req.email, req.password)
+        except HTTPException as error:
+            if error.status_code == 401:
+                _record_failed_login(pair_key, ip_key)
+            raise
     return {"access_token": issue_token(user), "token_type": "bearer",
             "expires_in": get_settings().AUTH_TOKEN_TTL_MINUTES * 60,
             "user": {"id": user.id, "email": user.email, "full_name": user.full_name, "role": user.role}}

@@ -6,6 +6,7 @@ import json
 import secrets
 import time
 from datetime import datetime
+from types import SimpleNamespace
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -26,7 +27,21 @@ ROLE_PERMISSIONS = {
     "evaluator": {"view:records"},
     "administrator": {"*"},
 }
+FREE_DEMO_USER_ID = "US_FREE_DEMO_EVALUATOR"
+FREE_DEMO_USER_EMAIL = "demo@bhumi-x.local"
+FREE_DEMO_USER_NAME = "BHUMI-X Demo Evaluator"
 bearer = HTTPBearer(auto_error=False)
+
+
+def free_demo_user():
+    """Return the fixed, non-persisted evaluator identity for FREE_DEMO_MODE."""
+    return SimpleNamespace(
+        id=FREE_DEMO_USER_ID,
+        email=FREE_DEMO_USER_EMAIL,
+        full_name=FREE_DEMO_USER_NAME,
+        role="evaluator",
+        is_active=True,
+    )
 
 
 def _b64(data: bytes) -> str:
@@ -87,6 +102,8 @@ def current_user(request: Request, credentials: HTTPAuthorizationCredentials | N
     if credentials is None:
         raise HTTPException(401, "Authentication required", headers={"WWW-Authenticate": "Bearer"})
     claims = _token_claims(credentials.credentials)
+    if settings.FREE_DEMO_MODE and claims.get("sub") == FREE_DEMO_USER_ID:
+        return free_demo_user()
     user = db.query(User).filter(User.id == claims.get("sub"), User.is_active.is_(True)).first()
     if not user:
         raise HTTPException(401, "User is inactive or no longer exists")
