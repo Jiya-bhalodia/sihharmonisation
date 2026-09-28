@@ -1,0 +1,47 @@
+{
+  "type": "FeatureCollection",
+  "name": "[Synthetic / Illustrative] Hosted Demo Area of Interest",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Synthetic hosted demo AOI",
+        "provenance": "synthetic_demo",
+        "purpose": "Bounded readiness fixture for the synthetic Ward 07 sample area; not a surveyed or government boundary."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24391,
+              16.70561
+            ],
+            [
+              74.25469,
+              16.70561
+            ],
+            [
+              74.25469,
+              16.714889999999997
+            ],
+            [
+              74.24391,
+              16.714889999999997
+            ],
+            [
+              74.24391,
+              16.70561
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

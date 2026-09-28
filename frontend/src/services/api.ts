@@ -133,6 +133,7 @@ export const api = {
 
   getStatistics: () => request<Statistics>('/statistics'),
   getDataQuality: () => request<DataQualityRow[]>('/data-quality'),
+  getTopologyResults: () => request<Array<{ id: string; dataset_id: string; feature_id: string; issue_type: string | null; is_valid: boolean; corrected: boolean; original_geometry: string | null; corrected_geometry: string | null }>>('/data-quality/topology'),
   getPilotReadiness: () => request<PilotReadiness>('/pilot/readiness'),
 
   exportFile: async (type: 'geojson' | 'csv') => {

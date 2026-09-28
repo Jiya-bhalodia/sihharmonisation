@@ -6,6 +6,7 @@ import { api } from '../services/api'
 
 export default function TopologyPage() {
   const { data: quality } = useApi(() => api.getDataQuality())
+  const { data: results } = useApi(() => api.getTopologyResults())
   const { data: stats } = useApi(() => api.getStatistics())
 
   const totalInvalid = useMemo(() => (quality || []).reduce((s, d) => s + d.invalid_geometry_count, 0), [quality])
@@ -80,6 +81,23 @@ export default function TopologyPage() {
               {(!quality || quality.length === 0) && (
                 <tr><td colSpan={5} className="px-4 py-10 text-center text-ink-400">Run harmonization to generate a topology report</td></tr>
               )}
+            </tbody>
+          </table>
+        </div>
+        <div className="card overflow-hidden">
+          <div className="border-b border-ink-100 px-5 py-3 text-xs font-bold text-ink-700">Validation Evidence</div>
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-ink-100 bg-ink-50 text-[10.5px] uppercase tracking-wide text-ink-400"><tr>
+              <th className="px-4 py-3">Feature</th><th className="px-4 py-3">Issue</th><th className="px-4 py-3">Corrected</th><th className="px-4 py-3">Geometry audit</th>
+            </tr></thead>
+            <tbody>{(results || []).map((result) => <tr key={result.id} className="border-b border-ink-50">
+              <td className="px-4 py-3 font-mono">{result.feature_id}</td><td className="px-4 py-3">{result.issue_type || '—'}</td>
+              <td className="px-4 py-3">{result.corrected ? 'Yes' : 'No'}</td><td className="px-4 py-3">
+                <details><summary className="cursor-pointer text-brand-700">Original and corrected geometry</summary>
+                  <div className="mt-2 grid gap-2 md:grid-cols-2"><pre className="max-h-40 overflow-auto rounded bg-ink-50 p-2 text-[9px]">Original: {result.original_geometry || '—'}</pre><pre className="max-h-40 overflow-auto rounded bg-ink-50 p-2 text-[9px]">Corrected: {result.corrected_geometry || '—'}</pre></div>
+                </details>
+              </td></tr>)}
+              {(!results || results.length === 0) && <tr><td colSpan={4} className="px-4 py-8 text-center text-ink-400">No validation issues recorded yet.</td></tr>}
             </tbody>
           </table>
         </div>

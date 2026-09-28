@@ -21,7 +21,7 @@ const CHANGE_COLORS: Record<string, string> = {
   geometry_changed: 'text-blue-600 bg-blue-50',
 }
 
-export default function ChangesPage() {
+export default function ChangesPage({ freeDemoMode = false }: { freeDemoMode?: boolean }) {
   const [filter, setFilter] = useState('')
   const { data: changes, loading } = useApi(() => api.getChanges(filter || undefined), [filter])
 
@@ -35,6 +35,9 @@ export default function ChangesPage() {
       <Topbar title="Change Detection" subtitle="Version-over-version comparison of the unified land record" />
 
       <div className="space-y-6 p-8">
+        {freeDemoMode && <div className="card border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          Snapshot and raster change detection are disabled in the hosted evaluation profile. This demo does not claim vector change results until a durable before/after vector comparison is supported.
+        </div>}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {['new', 'removed', 'modified', 'attribute_changed', 'geometry_changed'].map((type) => {
             const Icon = CHANGE_ICONS[type]
@@ -85,7 +88,7 @@ export default function ChangesPage() {
               ))}
               {!loading && (!changes || changes.length === 0) && (
                 <tr><td colSpan={6} className="px-4 py-10 text-center text-ink-400">
-                  No changes detected yet. Upload a newer dataset version (e.g. drone_buildings_v2.geojson) and re-run harmonization.
+                  {freeDemoMode ? 'Vector before/after change comparison is not available in this hosted demo. Snapshot and raster processing are disabled.' : 'No changes detected yet. Upload a newer dataset version and re-run harmonization.'}
                 </td></tr>
               )}
             </tbody>

@@ -21,7 +21,7 @@ ROLES = {"survey_officer", "revenue_officer", "municipal_officer", "reviewer", "
 ROLE_PERMISSIONS = {
     "survey_officer": {"upload:cadastral", "upload:gnss", "upload:ground_truth", "upload:orthoimagery", "upload:dsm", "upload:dtm", "view:records"},
     "revenue_officer": {"upload:revenue", "view:owner_data", "export"},
-    "municipal_officer": {"upload:municipal", "upload:utility", "upload:drone", "view:records"},
+    "municipal_officer": {"upload:municipal", "upload:utility", "upload:drone", "upload:land_use", "view:records"},
     "reviewer": {"review", "view:records", "view:owner_data", "export"},
     # Public evaluation access is intentionally read-only and owner-redacted.
     "evaluator": {"view:records"},

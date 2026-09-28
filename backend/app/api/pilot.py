@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.services.pilot_service import get_pilot_readiness
+from app.config import get_settings
 
 router = APIRouter()
 
 
 @router.get("/readiness")
 def pilot_readiness(db: Session = Depends(get_db)):
-    return get_pilot_readiness(db)
+    return get_pilot_readiness(db, free_demo_mode=get_settings().FREE_DEMO_MODE)

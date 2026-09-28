@@ -20,6 +20,8 @@ COPY data/sample/municipal_buildings.geojson /opt/demo-data/sample/municipal_bui
 COPY data/sample/ground_truth_points.geojson /opt/demo-data/sample/ground_truth_points.geojson
 COPY data/sample/utility_lines.geojson /opt/demo-data/sample/utility_lines.geojson
 COPY data/sample/gnss_survey_points.csv /opt/demo-data/sample/gnss_survey_points.csv
+COPY data/sample/land_use.geojson /opt/demo-data/sample/land_use.geojson
+COPY data/sample/hosted_demo_aoi.geojson /opt/demo-data/sample/hosted_demo_aoi.geojson
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     SAMPLE_DATA_DIR=/opt/demo-data/sample

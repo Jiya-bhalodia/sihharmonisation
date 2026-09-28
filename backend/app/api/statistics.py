@@ -89,3 +89,19 @@ def get_data_quality(db: Session = Depends(get_db)):
             "status": d.status,
         })
     return report
+
+
+@quality_router.get("/topology")
+def get_topology_results(db: Session = Depends(get_db)):
+    """Return persisted validation evidence, including original/corrected geometry snapshots."""
+    rows = db.query(ValidationResult).order_by(ValidationResult.dataset_id, ValidationResult.id).all()
+    return [{
+        "id": row.id,
+        "dataset_id": row.dataset_id,
+        "feature_id": row.feature_id,
+        "issue_type": row.issue_type,
+        "is_valid": row.is_valid,
+        "corrected": row.corrected,
+        "original_geometry": row.original_geometry,
+        "corrected_geometry": row.corrected_geometry,
+    } for row in rows]

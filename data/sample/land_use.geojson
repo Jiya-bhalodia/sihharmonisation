@@ -1,0 +1,286 @@
+{
+  "type": "FeatureCollection",
+  "name": "Synthetic illustrative land-use inventory",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24711,
+              16.70656
+            ],
+            [
+              74.24774,
+              16.70656
+            ],
+            [
+              74.24774,
+              16.70716753957808
+            ],
+            [
+              74.24713246042192,
+              16.707189999999997
+            ],
+            [
+              74.24711,
+              16.70656
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0101",
+        "land_use": "Vacant",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24486,
+              16.71181
+            ],
+            [
+              74.24548999999999,
+              16.71181
+            ],
+            [
+              74.24548999999999,
+              16.712433807739036
+            ],
+            [
+              74.24486619226096,
+              16.712439999999997
+            ],
+            [
+              74.24486,
+              16.71181
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0102",
+        "land_use": "Institutional",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.25011,
+              16.70956
+            ],
+            [
+              74.25074,
+              16.70956
+            ],
+            [
+              74.25074,
+              16.71018157384986
+            ],
+            [
+              74.25011842615015,
+              16.710189999999997
+            ],
+            [
+              74.25011,
+              16.70956
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0103",
+        "land_use": "Vacant",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.25161000000001,
+              16.70806
+            ],
+            [
+              74.25224,
+              16.70806
+            ],
+            [
+              74.25224,
+              16.70865971886258
+            ],
+            [
+              74.25164028113743,
+              16.708689999999997
+            ],
+            [
+              74.25161000000001,
+              16.70806
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0104",
+        "land_use": "Commercial",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24861000000001,
+              16.71331
+            ],
+            [
+              74.24924,
+              16.71331
+            ],
+            [
+              74.24924,
+              16.713924179438504
+            ],
+            [
+              74.24862582056151,
+              16.713939999999997
+            ],
+            [
+              74.24861000000001,
+              16.71331
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0105",
+        "land_use": "Commercial",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24561000000001,
+              16.70806
+            ],
+            [
+              74.24624,
+              16.70806
+            ],
+            [
+              74.24624,
+              16.70865615839254
+            ],
+            [
+              74.24564384160747,
+              16.708689999999997
+            ],
+            [
+              74.24561000000001,
+              16.70806
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0106",
+        "land_use": "Institutional",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.25086,
+              16.71331
+            ],
+            [
+              74.25148999999999,
+              16.71331
+            ],
+            [
+              74.25148999999999,
+              16.71391828073909
+            ],
+            [
+              74.2508817192609,
+              16.713939999999997
+            ],
+            [
+              74.25086,
+              16.71331
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0107",
+        "land_use": "Commercial",
+        "classification_source": "illustrative land-use inventory"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              74.24486,
+              16.71331
+            ],
+            [
+              74.24548999999999,
+              16.71331
+            ],
+            [
+              74.24548999999999,
+              16.71393850968766
+            ],
+            [
+              74.24486149031235,
+              16.713939999999997
+            ],
+            [
+              74.24486,
+              16.71331
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "parcel_id": "P-0108",
+        "land_use": "Vacant",
+        "classification_source": "illustrative land-use inventory"
+      }
+    }
+  ]
+}

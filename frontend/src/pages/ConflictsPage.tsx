@@ -8,7 +8,7 @@ import { buildLayerConfig, parcelsToFeatures } from '../services/geo'
 
 const STATUS_OPTIONS = ['Open', 'Under Review', 'Resolved', 'Accepted', 'Rejected']
 
-export default function ConflictsPage({ userRole }: { userRole?: string }) {
+export default function ConflictsPage({ userRole, freeDemoMode = false }: { userRole?: string; freeDemoMode?: boolean }) {
   const { data: conflicts, refetch } = useApi(() => api.getConflicts())
   const { data: parcels } = useApi(() => api.getParcels({ limit: 300 }))
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -28,6 +28,7 @@ export default function ConflictsPage({ userRole }: { userRole?: string }) {
   const handleResolve = async (id: string, status: string) => {
     await api.resolveConflict(id, status)
     refetch()
+    window.dispatchEvent(new Event('bhumix:data-updated'))
   }
 
   return (
@@ -71,9 +72,9 @@ export default function ConflictsPage({ userRole }: { userRole?: string }) {
                 {c.recommended_action && (
                   <p className="mt-1 text-[10.5px] italic text-ink-400">Recommended: {c.recommended_action}</p>
                 )}
-                {selectedId === c.id && userRole !== 'evaluator' && (
+                {selectedId === c.id && (userRole !== 'evaluator' || freeDemoMode) && (
                   <div className="mt-3 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>
-                    {STATUS_OPTIONS.map((s) => (
+                    {STATUS_OPTIONS.filter((s) => userRole !== 'evaluator' || ['Accepted', 'Rejected'].includes(s)).map((s) => (
                       <button
                         key={s}
                         onClick={() => handleResolve(c.id, s)}

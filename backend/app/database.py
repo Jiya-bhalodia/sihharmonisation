@@ -5,7 +5,7 @@ Uses SQLite in the local DEMO_MODE. FREE_DEMO_MODE always uses PostgreSQL
 and configures the connection search_path for Supabase's dedicated PostGIS
 schema while leaving the standard public-schema deployment as the default.
 """
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import get_settings
 from pathlib import Path
@@ -58,6 +58,15 @@ def init_db():
             if not extension_schema:
                 connection.execute(text(f'CREATE EXTENSION postgis WITH SCHEMA "{schema}"'))
     Base.metadata.create_all(bind=engine)
+    # create_all does not add columns to an existing local SQLite demo file.
+    # Keep the small provenance addition compatible with that persistent file.
+    if engine.dialect.name == "sqlite" and "provenance" not in {
+        column["name"] for column in inspect(engine).get_columns("datasets")
+    }:
+        with engine.begin() as connection:
+            connection.execute(text(
+                "ALTER TABLE datasets ADD COLUMN provenance VARCHAR(80) NOT NULL DEFAULT 'user_upload'"
+            ))
     if engine.dialect.name == "postgresql":
         run_postgres_migrations()
     if not get_settings().is_local_demo_mode:

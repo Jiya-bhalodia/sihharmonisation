@@ -1,8 +1,10 @@
 from shapely.geometry import Polygon
+from types import SimpleNamespace
 
 from app.geo.crs import geometry_to_geojson_str
 from app.geo.topology import geometry_audit_snapshots
 from app.ml.schema_mapper import preserve_manual_overrides
+from app.services.harmonization_service import _topology_source_geometry
 
 
 def test_geometry_audit_keeps_original_separate_from_correction():
@@ -46,3 +48,11 @@ def test_generated_mapping_without_override_is_unchanged():
     assert mapping["canonical_field"] == "owner_name"
     assert mapping["confidence"] == 91.0
     assert mapping["manual_override"] is False
+
+
+def test_topology_rerun_uses_preserved_source_geometry():
+    feature = SimpleNamespace(id="feature-1", geometry_geojson='{"type":"Polygon","coordinates":[]}')
+    previous = {"original_geometry": '{"type":"Polygon","coordinates":[["source"]]}'}
+
+    assert _topology_source_geometry(feature, {feature.id: previous}) == previous["original_geometry"]
+    assert _topology_source_geometry(feature, {}) == feature.geometry_geojson

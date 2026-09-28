@@ -11,6 +11,7 @@ from app.models.orm import Conflict
 from app.models.schemas import ConflictOut, ConflictResolveRequest
 from app.models.orm import User
 from app.security import current_user, require_permission, write_audit
+from app.config import get_settings
 
 router = APIRouter()
 
@@ -40,9 +41,14 @@ def get_conflicts(
 @router.post("/{conflict_id}/resolve", response_model=ConflictOut)
 def resolve_conflict(conflict_id: str, req: ConflictResolveRequest, request: Request,
                      db: Session = Depends(get_db), user: User | None = Depends(current_user)):
-    require_permission(user, "review")
     if req.status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+    evaluator_decision = (
+        get_settings().FREE_DEMO_MODE and user is not None and user.role == "evaluator"
+        and req.status in {"Accepted", "Rejected"}
+    )
+    if not evaluator_decision:
+        require_permission(user, "review")
     conflict = db.query(Conflict).filter(Conflict.id == conflict_id).first()
     if not conflict:
         raise HTTPException(status_code=404, detail="Conflict not found")

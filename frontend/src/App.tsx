@@ -62,9 +62,9 @@ export default function App() {
             <Route path="/data-sources" element={<DataSourcesPage userRole={user?.role} freeDemoMode={freeDemoMode} freeDemoLimits={freeDemoLimits} />} />
             <Route path="/harmonization" element={<HarmonizationPage userRole={user?.role} freeDemoMode={freeDemoMode} />} />
             <Route path="/spatial-matching" element={<SpatialMatchingPage />} />
-            <Route path="/conflicts" element={<ConflictsPage userRole={user?.role} />} />
+            <Route path="/conflicts" element={<ConflictsPage userRole={user?.role} freeDemoMode={freeDemoMode} />} />
             <Route path="/topology" element={<TopologyPage />} />
-            <Route path="/changes" element={<ChangesPage />} />
+            <Route path="/changes" element={<ChangesPage freeDemoMode={freeDemoMode} />} />
             <Route path="/records" element={<RecordsPage userRole={user?.role} />} />
             <Route path="/reports" element={<ReportsPage userRole={user?.role} freeDemoMode={freeDemoMode} />} />
             <Route path="/settings" element={<SettingsPage />} />

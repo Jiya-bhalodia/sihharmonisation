@@ -85,7 +85,10 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         const failure = result.stages.find((stage) => stage.status === 'failed')
         setError(failure?.detail || 'Harmonization failed. Check the backend worker logs for details.')
       }
-      if (result.status === 'completed') refetchMappings()
+      if (result.status === 'completed') {
+        refetchMappings()
+        window.dispatchEvent(new Event('bhumix:data-updated'))
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Harmonization failed. Check that the backend is running, then try again.')
     } finally {
@@ -115,7 +118,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
             </p>
             {freeDemoMode && <p className="mt-2 text-xs text-amber-800">Hosted demo jobs run synchronously with feature and geometry limits. Snapshot-based change detection, raster/model/OCR processing are disabled.</p>}
           </div>
-          {userRole !== 'evaluator' && <button
+          {(userRole !== 'evaluator' || freeDemoMode) && <button
             onClick={handleRun}
             disabled={running}
             className="flex shrink-0 items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-60"
@@ -159,6 +162,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
                       <span className="text-sm font-bold text-ink-800">{name}</span>
                       {status === 'completed' && <span className="badge bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-200">Completed</span>}
                       {status === 'failed' && <span className="badge bg-red-50 text-red-700 ring-1 ring-inset ring-red-200">Failed</span>}
+                      {status === 'disabled' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Disabled in hosted demo</span>}
                       {status === 'pending' && <span className="badge bg-ink-100 text-ink-400">Pending</span>}
                       {status === 'running' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Running</span>}
                     </div>
@@ -169,7 +173,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
                         {detail.warnings > 0 && <span className="font-mono text-amber-600">warnings: {detail.warnings}</span>}
                       </div>
                     ) : (
-                      <div className="mt-1.5 text-xs text-ink-300">Awaiting pipeline run</div>
+                      <div className="mt-1.5 text-xs text-ink-300">{status === 'disabled' ? 'Snapshot change detection needs durable before/after storage.' : 'Awaiting pipeline run'}</div>
                     )}
                   </div>
                 </div>

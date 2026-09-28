@@ -3,6 +3,7 @@ export interface Dataset {
   name: string
   department: string
   source_type: string
+  provenance: string
   geometry_type: string | null
   crs: string | null
   feature_count: number
@@ -34,6 +35,7 @@ export interface UnifiedParcel {
   lineage: Record<string, {
     dataset_id: string
     dataset_name: string
+    provenance?: string
     feature_id: string
     contributed_fields: string[]
     confidence: number
@@ -152,15 +154,16 @@ export interface SystemHealth {
 export interface PilotReadinessCheck {
   id: string
   required: boolean
-  status: 'PASS' | 'BLOCKER' | 'RECOMMENDED'
+  status: 'PASS' | 'BLOCKER' | 'RECOMMENDED' | 'LIMITATION'
   title: string
   detail: string
   action: string
 }
 
 export interface PilotReadiness {
-  status: 'READY_FOR_REVIEW' | 'NOT_READY'
+  status: 'READY_FOR_REVIEW' | 'DEMO_READY' | 'NOT_READY'
   blocker_count: number
   checks: PilotReadinessCheck[]
   disclaimer: string
+  limitations?: string[]
 }

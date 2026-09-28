@@ -33,6 +33,7 @@ settings = get_settings()
 
 CANONICAL_TYPE_BY_SOURCE = {
     "cadastral": "parcel",
+    "land_use": "parcel",
     "revenue": "parcel",
     "municipal": "building",
     "gnss": "gnss_point",
@@ -67,6 +68,7 @@ def ingest_geojson_dict(
     department: str,
     source_type: str,
     declared_crs: Optional[str] = None,
+    provenance: str = "user_upload",
 ) -> Dataset:
     """Core ingestion routine shared by file upload and sample data loading."""
     feats = geojson.get("features", [])
@@ -88,6 +90,7 @@ def ingest_geojson_dict(
         name=name,
         department=department,
         source_type=source_type,
+        provenance=provenance,
         geometry_type=feats[0]["geometry"]["type"] if feats else "Unknown",
         crs=source_crs,
         feature_count=0,
@@ -151,7 +154,8 @@ def ingest_geojson_file(db: Session, file_bytes: bytes, name: str, department: s
 
 
 def ingest_csv_latlon(db: Session, file_bytes: bytes, name: str, department: str, source_type: str,
-                       lat_field: str = "latitude", lon_field: str = "longitude") -> Dataset:
+                       lat_field: str = "latitude", lon_field: str = "longitude",
+                       provenance: str = "user_upload") -> Dataset:
     import pandas as pd
     import io
 
@@ -173,7 +177,8 @@ def ingest_csv_latlon(db: Session, file_bytes: bytes, name: str, department: str
             "properties": props,
         })
     geojson = {"type": "FeatureCollection", "features": features}
-    return ingest_geojson_dict(db, geojson, name, department, source_type, declared_crs="EPSG:4326")
+    return ingest_geojson_dict(db, geojson, name, department, source_type,
+                               declared_crs="EPSG:4326", provenance=provenance)
 
 
 def _safe_extract_zip(zf: zipfile.ZipFile, dest_dir: str) -> None:

@@ -38,3 +38,13 @@ def test_readiness_accepts_complete_technical_evidence():
     report = evaluate_pilot_readiness(datasets, features, aoi_exists=True)
     assert report["status"] == "READY_FOR_REVIEW"
     assert report["blocker_count"] == 0
+
+
+def test_free_demo_treats_missing_aoi_as_hosted_limitation():
+    report = evaluate_pilot_readiness([], {}, aoi_exists=False, free_demo_mode=True)
+    aoi = next(check for check in report["checks"] if check["id"] == "aoi")
+
+    assert aoi["status"] == "LIMITATION"
+    assert aoi["required"] is False
+    assert "do not require an AOI" in aoi["detail"]
+    assert "AOI-based clipping" in report["limitations"][-1]

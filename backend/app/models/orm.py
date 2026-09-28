@@ -21,6 +21,7 @@ class Dataset(Base):
     name = Column(String, nullable=False)
     department = Column(String, nullable=False)
     source_type = Column(String, nullable=False)   # cadastral, revenue, municipal, gnss, ground_truth, utility, drone
+    provenance = Column(String, nullable=False, default="user_upload")
     geometry_type = Column(String, nullable=True)   # Polygon, Point, LineString, Table
     crs = Column(String, nullable=True)
     feature_count = Column(Integer, default=0)

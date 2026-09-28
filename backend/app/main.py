@@ -38,10 +38,13 @@ def on_startup():
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION} (demo_mode={settings.is_local_demo_mode}, free_demo_mode={settings.FREE_DEMO_MODE})")
     init_db()
     logger.info("Database initialized")
-    if settings.LOAD_SAMPLE_DATA:
+    # The hosted evaluator database is persistent, but Render instances can
+    # sleep or restart. Ensure its deterministic fixture exists independently
+    # of the opt-in local-demo setting; seed() is idempotent in free-demo mode.
+    if settings.LOAD_SAMPLE_DATA or settings.FREE_DEMO_MODE:
         from run_seed import seed
         loaded = seed()
-        logger.info(f"Local synthetic sample data {'loaded' if loaded else 'already present'}")
+        logger.info(f"Synthetic sample data {'loaded' if loaded else 'already present'}")
 
 
 @app.get("/")

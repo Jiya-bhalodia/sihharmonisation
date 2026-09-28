@@ -26,3 +26,5 @@ data/sample/*
 !data/sample/ground_truth_points.geojson
 !data/sample/utility_lines.geojson
 !data/sample/gnss_survey_points.csv
+!data/sample/land_use.geojson
+!data/sample/hosted_demo_aoi.geojson

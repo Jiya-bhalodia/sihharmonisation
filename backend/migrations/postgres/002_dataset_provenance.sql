@@ -1,0 +1,1 @@
+ALTER TABLE datasets ADD COLUMN IF NOT EXISTS provenance VARCHAR(80) NOT NULL DEFAULT 'user_upload';

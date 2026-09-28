@@ -14,6 +14,7 @@ const SOURCE_TYPES = [
   { value: 'gnss', label: 'GNSS/CORS Points (Survey Department)' },
   { value: 'ground_truth', label: 'Ground Truth (Field Team)' },
   { value: 'utility', label: 'Utility Network (Utility Department)' },
+  { value: 'land_use', label: 'Land Use (Municipal Corporation)' },
   { value: 'drone', label: 'Drone-Derived Imagery/Buildings' },
   { value: 'orthoimagery', label: 'Orthorectified Imagery (ORI)' },
   { value: 'dsm', label: 'DSM / Surface Model' },
@@ -58,6 +59,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
       fd.append('lon_field', form.lon_field)
       if (freeDemoMode) fd.append('public_demo_approved', String(publicDemoApproved))
       await api.uploadDataset(fd)
+      window.dispatchEvent(new Event('bhumix:data-updated'))
       setShowUpload(false)
       setFile(null)
       setPublicDemoApproved(false)
@@ -110,6 +112,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
                 <th className="px-4 py-3 font-semibold">Dataset</th>
                 <th className="px-4 py-3 font-semibold">Department</th>
                 <th className="px-4 py-3 font-semibold">Type</th>
+                <th className="px-4 py-3 font-semibold">Provenance</th>
                 <th className="px-4 py-3 font-semibold">Geometry</th>
                 <th className="px-4 py-3 font-semibold">CRS</th>
                 <th className="px-4 py-3 font-semibold">Features</th>
@@ -124,6 +127,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
                   <td className="px-4 py-3 font-semibold text-ink-800">{d.name}</td>
                   <td className="px-4 py-3 text-ink-500">{d.department}</td>
                   <td className="px-4 py-3 text-ink-500">{d.source_type}</td>
+                  <td className="px-4 py-3 text-ink-500">{d.provenance === 'synthetic_demo' ? 'Synthetic demo' : d.provenance}</td>
                   <td className="px-4 py-3 text-ink-500">{d.geometry_type}</td>
                   <td className="px-4 py-3 font-mono text-[10.5px] text-ink-500">{d.crs}</td>
                   <td className="px-4 py-3 text-ink-700">{d.feature_count}</td>
@@ -141,8 +145,8 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
                 </tr>
               ))}
               {!loading && (!datasets || datasets.length === 0) && (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-ink-400">
-                  No datasets uploaded yet. Click "Upload Dataset" to add source data. Local demo sample data can be enabled with <code className="rounded bg-ink-100 px-1.5 py-0.5">LOAD_SAMPLE_DATA=true</code>.
+                <tr><td colSpan={10} className="px-4 py-10 text-center text-ink-400">
+                  No datasets uploaded yet. Click "Upload Dataset" to add source data.
                 </td></tr>
               )}
             </tbody>

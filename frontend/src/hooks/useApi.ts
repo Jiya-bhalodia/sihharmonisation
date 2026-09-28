@@ -29,7 +29,15 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: DependencyList = []):
     return () => { cancelled = true }
   }, deps)
 
-  useEffect(() => load(), [tick, load])
+  useEffect(() => {
+    const cleanup = load()
+    const refresh = () => setTick((value) => value + 1)
+    window.addEventListener('bhumix:data-updated', refresh)
+    return () => {
+      cleanup?.()
+      window.removeEventListener('bhumix:data-updated', refresh)
+    }
+  }, [tick, load])
 
   const refetch = useCallback(() => setTick((t) => t + 1), [])
 

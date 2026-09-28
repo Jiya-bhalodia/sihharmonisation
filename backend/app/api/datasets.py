@@ -32,7 +32,7 @@ logger = get_logger("api.datasets")
 settings = get_settings()
 
 ALLOWED_EXTENSIONS = (".geojson", ".json", ".csv", ".zip", ".kml", ".kmz", ".tif", ".tiff", ".pdf")
-VALID_SOURCE_TYPES = {"cadastral", "revenue", "municipal", "gnss", "ground_truth", "utility", "drone", "orthoimagery", "dsm", "dtm"}
+VALID_SOURCE_TYPES = {"cadastral", "revenue", "municipal", "gnss", "ground_truth", "utility", "land_use", "drone", "orthoimagery", "dsm", "dtm"}
 
 
 @router.get("", response_model=List[DatasetOut])

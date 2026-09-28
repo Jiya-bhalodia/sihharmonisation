@@ -11,6 +11,7 @@ class DatasetOut(BaseModel):
     name: str
     department: str
     source_type: str
+    provenance: str
     geometry_type: Optional[str]
     crs: Optional[str]
     feature_count: int

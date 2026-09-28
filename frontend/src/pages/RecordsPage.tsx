@@ -9,6 +9,19 @@ import { api } from '../services/api'
 import { buildLayerConfig, parcelsToFeatures } from '../services/geo'
 import type { UnifiedParcel } from '../types'
 
+function parcelProvenance(parcel: UnifiedParcel) {
+  return [...new Set(Object.values(parcel.lineage || {}).map((source) => source.provenance).filter((value): value is string => Boolean(value)))];
+}
+
+function hasSyntheticSource(parcel: UnifiedParcel) {
+  return parcelProvenance(parcel).includes('synthetic_demo');
+}
+
+function provenanceLabel(parcel: UnifiedParcel) {
+  const sources = parcelProvenance(parcel).map((value) => value === 'synthetic_demo' ? 'Synthetic Demo Data' : value);
+  return sources.length ? [...new Set(sources)].join(', ') : 'Provenance unavailable';
+}
+
 export default function RecordsPage({ userRole }: { userRole?: string }) {
   const [view, setView] = useState<'table' | 'map'>('table')
   const [search, setSearch] = useState('')
@@ -43,6 +56,7 @@ export default function RecordsPage({ userRole }: { userRole?: string }) {
       <Topbar title="Unified Land Records" subtitle="Canonical, harmonized cadastral/urban land dataset with full source lineage" />
 
       <div className="space-y-6 p-8">
+        {parcels?.some(hasSyntheticSource) && <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">Synthetic Demo Data — illustrative parcels are not official Maharashtra cadastral/revenue records, real survey measurements, or SOI CORS observations.</div>}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-1 items-center gap-2 rounded-lg border border-ink-200 bg-white px-3 py-2">
             <Search size={14} className="text-ink-300" />
@@ -89,6 +103,7 @@ export default function RecordsPage({ userRole }: { userRole?: string }) {
                   <th className="px-4 py-3 font-semibold">Land Use</th>
                   <th className="px-4 py-3 font-semibold">Buildings</th>
                   <th className="px-4 py-3 font-semibold">Sources</th>
+                  <th className="px-4 py-3 font-semibold">Provenance</th>
                   <th className="px-4 py-3 font-semibold">Confidence</th>
                   <th className="px-4 py-3 font-semibold">Validation</th>
                   <th className="px-4 py-3 font-semibold">Conflicts</th>
@@ -103,13 +118,14 @@ export default function RecordsPage({ userRole }: { userRole?: string }) {
                     <td className="px-4 py-3 text-ink-600">{p.land_use}</td>
                     <td className="px-4 py-3 text-ink-600">{p.building_count}</td>
                     <td className="px-4 py-3 text-ink-600">{p.source_count}</td>
+                    <td className="px-4 py-3 text-ink-600">{provenanceLabel(p)}</td>
                     <td className="px-4 py-3"><ConfidenceBadge value={p.confidence_score} showLabel={false} /></td>
                     <td className="px-4 py-3"><StatusBadge status={p.validation_status} /></td>
                     <td className="px-4 py-3"><StatusBadge status={p.conflict_status} /></td>
                   </tr>
                 ))}
                 {!loading && (!parcels || parcels.length === 0) && (
-                  <tr><td colSpan={9} className="px-4 py-10 text-center text-ink-400">
+                  <tr><td colSpan={10} className="px-4 py-10 text-center text-ink-400">
                     No unified records yet. Run the harmonization pipeline first.
                   </td></tr>
                 )}
@@ -143,7 +159,7 @@ function ParcelDetailPanel({ parcel, onClose }: { parcel: UnifiedParcel; onClose
           <Field label="Land Use" value={parcel.land_use || '—'} />
           <Field label="Buildings" value={String(parcel.building_count)} />
           <Field label="Utilities" value={String(parcel.utility_count)} />
-          <Field label="GNSS Verified" value={parcel.gnss_verified ? 'YES' : 'NO'} />
+          <Field label="GNSS evidence" value={Object.entries(parcel.lineage || {}).some(([type, source]) => type.toLowerCase().includes('gnss') && source.provenance === 'synthetic_demo') ? 'Synthetic demo observations' : parcel.gnss_verified ? 'Linked' : 'None'} />
           <Field label="Ground Truth" value={parcel.ground_truth_verified ? 'YES' : 'NO'} />
           <Field label="Source Count" value={String(parcel.source_count)} />
           <Field label="Validation" value={parcel.validation_status} />
@@ -191,6 +207,7 @@ function ParcelDetailPanel({ parcel, onClose }: { parcel: UnifiedParcel; onClose
                   <span className="badge bg-white text-ink-500 ring-1 ring-inset ring-ink-200">{info.confidence.toFixed(0)}%</span>
                 </div>
                 <div className="mt-1 text-[10.5px] text-ink-400">{info.dataset_name}</div>
+                {info.provenance && <div className="mt-1 text-[10px] font-semibold text-brand-700">{info.provenance.replace(/_/g, ' ')}</div>}
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {info.contributed_fields.slice(0, 6).map((f) => (
                     <span key={f} className="rounded bg-white px-1.5 py-0.5 font-mono text-[9.5px] text-ink-400">{f}</span>

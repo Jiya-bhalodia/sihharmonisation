@@ -80,6 +80,14 @@ def _stage(db: Session, job: HarmonizationJob, name: str, status: str, processed
     db.commit()
 
 
+def _topology_source_geometry(feature, previous_validation_by_feature):
+    """Return the first pre-correction geometry retained for this feature."""
+    previous = previous_validation_by_feature.get(feature.id)
+    if previous and previous.get("original_geometry"):
+        return previous["original_geometry"]
+    return feature.geometry_geojson
+
+
 def run_harmonization(db: Session, existing_job_id: str | None = None,
                       max_processing_seconds: int | None = None) -> HarmonizationJob:
     deadline = time.monotonic() + max_processing_seconds if max_processing_seconds else None
@@ -163,6 +171,16 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
         # --- Stage 4: Topology Validation ---
         _stage(db, job, "Topology Validation", "running", processed=0,
                detail=f"Checking geometry validity and spatial-index candidates across {len(all_features)} features")
+        previous_validation_by_feature = {}
+        for previous in db.query(ValidationResult).all():
+            # Retain the earliest source snapshot if an older database has
+            # accumulated multiple validation rows for one feature.
+            existing = previous_validation_by_feature.get(previous.feature_id)
+            if existing is None or (not existing["original_geometry"] and previous.original_geometry):
+                previous_validation_by_feature[previous.feature_id] = {
+                    "original_geometry": previous.original_geometry,
+                    "issue_type": previous.issue_type,
+                }
         db.query(ValidationResult).delete()
         topo_errors = 0
         topo_corrected = 0
@@ -174,13 +192,21 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
             for f in feats:
                 check_processing_deadline(deadline)
                 geom = geojson_str_to_geometry(f.geometry_geojson) if f.geometry_geojson else None
-                original_geometry_geojson = f.geometry_geojson
+                original_geometry_geojson = _topology_source_geometry(f, previous_validation_by_feature)
+                current_geometry_geojson = f.geometry_geojson
                 vresult = validate_geometry(geom)
                 f.is_valid_geometry = vresult["is_valid"]
-                if not vresult["is_valid"] or vresult["issue_type"] != "none":
+                previous_validation = previous_validation_by_feature.get(f.id)
+                has_preserved_correction = bool(
+                    previous_validation and previous_validation["original_geometry"]
+                    and previous_validation["original_geometry"] != current_geometry_geojson
+                )
+                if not vresult["is_valid"] or vresult["issue_type"] != "none" or has_preserved_correction:
                     topo_errors += 1
                     audit_original_geojson, corrected_geojson = geometry_audit_snapshots(
-                        original_geometry_geojson, vresult["corrected_geometry"]
+                        original_geometry_geojson,
+                        vresult["corrected_geometry"] if vresult["corrected_geometry"] is not None
+                        else (geojson_str_to_geometry(current_geometry_geojson) if has_preserved_correction else None),
                     )
                     if vresult["corrected_geometry"] is not None:
                         topo_corrected += 1
@@ -197,10 +223,11 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
                         feature_id=f.id,
                         dataset_id=dataset.id,
                         is_valid=vresult["is_valid"],
-                        issue_type=vresult["issue_type"],
+                        issue_type=(vresult["issue_type"] if vresult["issue_type"] != "none"
+                                    else previous_validation["issue_type"] if has_preserved_correction else "none"),
                         original_geometry=audit_original_geojson,
                         corrected_geometry=corrected_geojson,
-                        corrected=vresult["corrected"],
+                        corrected=vresult["corrected"] or has_preserved_correction,
                     )
                     db.add(vr)
                 if geom is not None and geom.geom_type in ("Polygon", "MultiPolygon"):
@@ -459,6 +486,7 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
             lineage[dataset.source_type] = {
                 "dataset_id": dataset.id,
                 "dataset_name": dataset.name,
+                "provenance": dataset.provenance,
                 "feature_id": f.id,
                 "contributed_fields": contributed_fields,
                 "confidence": lineage_confidence,

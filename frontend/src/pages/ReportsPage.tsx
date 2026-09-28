@@ -42,7 +42,7 @@ export default function ReportsPage({ userRole, freeDemoMode = false }: { userRo
     },
     {
       title: 'Change Detection Report',
-      description: freeDemoMode ? 'Unavailable in this hosted profile because durable snapshot storage is not configured.' : 'New, removed, and modified features detected across harmonization runs.',
+      description: freeDemoMode ? 'Snapshot and raster change detection are disabled in the hosted evaluation profile; no vector before/after report is claimed.' : 'New, removed, and modified features detected across harmonization runs.',
       data: changes,
       filename: 'bhumix_change_report.json',
     },

@@ -35,7 +35,10 @@ def _add_pilot_readiness_warning(db: Session, job: HarmonizationJob) -> None:
 @router.post("", response_model=HarmonizationJobOut)
 def trigger_harmonization(request: Request, db: Session = Depends(get_db),
                           user: User | None = Depends(current_user)):
-    require_permission(user, "review")
+    # The hosted evaluator can request the bounded, synchronous vector demo
+    # workflow. Other review/write actions remain denied by the evaluator role.
+    if not (settings.FREE_DEMO_MODE and user is not None and user.role == "evaluator"):
+        require_permission(user, "review")
 
     # Local SQLite demo and the explicitly bounded hosted demo use their
     # supported synchronous paths. Full production continues through Celery.

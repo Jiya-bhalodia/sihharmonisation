@@ -137,7 +137,7 @@ def ensure_dataset_capacity(db: Session, added_features: int = 0,
             geometry = json.loads(feature[0])
         except (TypeError, json.JSONDecodeError):
             continue
-            existing_complexity += _geometry_complexity(geometry)
+        existing_complexity += _geometry_complexity(geometry)
     if existing_complexity + added_complexity > settings.FREE_DEMO_MAX_GEOMETRY_COMPLEXITY:
         raise HTTPException(status_code=413, detail="This geometry exceeds the free demo complexity limit.")
 
