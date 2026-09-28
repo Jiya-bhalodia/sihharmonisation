@@ -55,9 +55,9 @@ export default function App() {
     <div className="platform-app">
       <Sidebar user={user} onSignOut={() => { api.logout(); setUser(null); setAuthState('login') }} />
       <main className={`platform-main${isLandingPage ? ' home-main' : ''}`}>
-        {freeDemoMode && <div className="mx-4 mt-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-xs text-brand-900 md:mx-8" role="note">
+        {freeDemoMode && <div className="demo-notice mx-3 mt-3 flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs text-brand-900 md:mx-8 md:mt-4 md:px-4 md:py-2.5" role="note">
           <strong>BHUMI-X Evaluation Demo</strong>
-          <span className="ml-2">Some advanced processing features are disabled in this hosted evaluation environment. Only bounded CSV/GeoJSON vector workflows are enabled.</span>
+          <span>Some advanced processing features are disabled in this hosted evaluation environment. Only bounded CSV/GeoJSON vector workflows are enabled.</span>
         </div>}
         <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading page…</div>}>
           <Routes>
