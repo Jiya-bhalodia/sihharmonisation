@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, FileJson, FileSpreadsheet, FileArchive, Trash2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Upload, FileJson, FileSpreadsheet, FileArchive, Trash2, CheckCircle2 } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import StatusBadge from '../components/StatusBadge'
 import { useApi } from '../hooks/useApi'
@@ -30,6 +30,10 @@ function fileIcon(name: string) {
   if (name.endsWith('.zip')) return FileArchive
   if (name.endsWith('.csv')) return FileSpreadsheet
   return FileJson
+}
+
+function displayDatasetName(name: string) {
+  return name.replace(/^\[Synthetic\s*\/\s*Illustrative\]\s*/i, '')
 }
 
 export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDemoLimits = { maxUploadMb: 2, maxDatasets: 20, maxFeatures: 1000 } }: {
@@ -84,17 +88,6 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
       <Topbar title="Data Sources" subtitle="Ingest multi-source geospatial data from participating departments" />
 
       <div className="space-y-6 p-8">
-        <div className="card border-brand-100 bg-brand-50/40 px-5 py-4">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={16} className="mt-0.5 shrink-0 text-brand-600" />
-            <p className="text-xs text-brand-800">
-              Hosted evaluation should use <strong>Synthetic / Illustrative Demo Data</strong> only. Generated fixtures
-              exhibit realistic inconsistencies (schema mismatches, coordinate drift, duplicate IDs, invalid geometry)
-              so harmonization has meaningful work to solve. They are not government-authoritative.
-            </p>
-          </div>
-        </div>
-
         <div className="flex items-center justify-between">
           <div className="text-sm text-ink-500">{datasets?.length ?? 0} datasets connected</div>
           {userRole !== 'evaluator' && <button
@@ -124,7 +117,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
             <tbody>
               {(datasets || []).map((d) => (
                 <tr key={d.id} className="border-b border-ink-50 hover:bg-ink-50/50">
-                  <td className="px-4 py-3 font-semibold text-ink-800">{d.name}</td>
+                  <td className="px-4 py-3 font-semibold text-ink-800">{displayDatasetName(d.name)}</td>
                   <td className="px-4 py-3 text-ink-500">{d.department}</td>
                   <td className="px-4 py-3 text-ink-500">{d.source_type}</td>
                   <td className="px-4 py-3 text-ink-500">{d.provenance === 'synthetic_demo' ? 'Synthetic demo' : d.provenance}</td>
@@ -138,7 +131,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={d.status} /></td>
                   <td className="px-4 py-3 text-right">
-                    {userRole !== 'evaluator' && <button onClick={() => handleDelete(d.id)} className="rounded p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-600" aria-label={`Remove ${d.name}`} title={`Remove ${d.name}`}>
+                    {userRole !== 'evaluator' && <button onClick={() => handleDelete(d.id)} className="rounded p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-600" aria-label={`Remove ${displayDatasetName(d.name)}`} title={`Remove ${displayDatasetName(d.name)}`}>
                       <Trash2 size={13} />
                     </button>}
                   </td>

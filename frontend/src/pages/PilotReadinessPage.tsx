@@ -17,15 +17,13 @@ export default function PilotReadinessPage() {
           <div className={`card flex items-center justify-between border p-5 ${readiness.status === 'READY_FOR_REVIEW' || readiness.status === 'DEMO_READY' ? 'border-brand-200 bg-brand-50/40' : 'border-amber-200 bg-amber-50/50'}`}>
             <div className="flex items-center gap-3">
               <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${readiness.status === 'READY_FOR_REVIEW' || readiness.status === 'DEMO_READY' ? 'bg-brand-100 text-brand-700' : 'bg-amber-100 text-amber-700'}`}>
-                {readiness.status === 'READY_FOR_REVIEW' || readiness.status === 'DEMO_READY' ? <CheckCircle2 size={21} /> : <CircleAlert size={21} />}
+                {readiness.status === 'READY_FOR_REVIEW' || readiness.status === 'DEMO_READY' ? <CheckCircle2 size={21} aria-hidden="true" /> : <CircleAlert size={21} aria-hidden="true" />}
               </div>
               <div>
-                <div className="text-sm font-bold text-ink-900">{readiness.status === 'DEMO_READY' ? 'Hosted demo data available' : readiness.status === 'READY_FOR_REVIEW' ? 'Ready for departmental review' : `${readiness.blocker_count} blocker${readiness.blocker_count === 1 ? '' : 's'} before pilot use`}</div>
-              <p className="mt-0.5 text-xs text-ink-500">{readiness.disclaimer}</p>
-              {readiness.limitations?.map((limitation) => <p key={limitation} className="mt-1 text-xs text-amber-800">{limitation}</p>)}
+                <div className="text-sm font-bold text-ink-900">{readiness.status === 'DEMO_READY' ? 'Readiness checks complete' : readiness.status === 'READY_FOR_REVIEW' ? 'Ready for departmental review' : `${readiness.blocker_count} blocker${readiness.blocker_count === 1 ? '' : 's'} before pilot use`}</div>
               </div>
             </div>
-            <button onClick={refetch} className="rounded-lg border border-ink-200 p-2 text-ink-500 hover:bg-white"><RefreshCcw size={15} /></button>
+            <button onClick={refetch} aria-label="Refresh readiness checks" className="rounded-lg border border-ink-200 p-2 text-ink-500 hover:bg-white"><RefreshCcw size={15} aria-hidden="true" /></button>
           </div>
 
           <div className="card overflow-hidden">

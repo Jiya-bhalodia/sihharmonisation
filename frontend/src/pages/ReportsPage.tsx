@@ -20,6 +20,54 @@ export default function ReportsPage({ userRole, freeDemoMode = false }: { userRo
   const { data: conflicts } = useApi(() => api.getConflicts())
   const { data: changes } = useApi(() => api.getChanges())
   const [changeExportError, setChangeExportError] = useState('')
+  const [reportDownloading, setReportDownloading] = useState(false)
+  const [reportDownloadError, setReportDownloadError] = useState('')
+  const [reportDownloaded, setReportDownloaded] = useState(false)
+
+  const downloadCurrentReport = async () => {
+    setReportDownloading(true)
+    setReportDownloadError('')
+    setReportDownloaded(false)
+    try {
+      const [statistics, dataQuality, datasets, unifiedRecords, matches, mappings, currentConflicts, topology, currentChanges, pilotReadiness] = await Promise.all([
+        api.getStatistics(),
+        api.getDataQuality(),
+        api.getDatasets(),
+        api.getParcels({ limit: 2000 }),
+        api.getMatches({ limit: 3000 }),
+        api.getMappings(),
+        api.getConflicts(),
+        api.getTopologyResults(),
+        api.getChanges(),
+        api.getPilotReadiness(),
+      ])
+      const report = {
+        report_type: 'BHUMI-X current results report',
+        generated_at: new Date().toISOString(),
+        hosted_free_demo: freeDemoMode,
+        results: {
+          statistics, data_quality: dataQuality, datasets, unified_records: unifiedRecords,
+          matches, mappings, conflicts: currentConflicts, topology, changes: currentChanges,
+          pilot_readiness: pilotReadiness,
+        },
+      }
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' })
+      if (!blob.size) throw new Error('The report is empty.')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `bhumix_current_report_${new Date().toISOString().slice(0, 10)}.json`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setReportDownloaded(true)
+    } catch (error) {
+      setReportDownloadError(error instanceof Error ? error.message : 'Could not download the report.')
+    } finally {
+      setReportDownloading(false)
+    }
+  }
 
   const reports = [
     {
@@ -65,6 +113,18 @@ export default function ReportsPage({ userRole, freeDemoMode = false }: { userRo
       <Topbar title="Reports" subtitle="Review harmonization, quality, conflict, and change-detection results" />
 
       <div className="space-y-6 p-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-ink-500">Download a fresh report assembled from current BHUMI-X API results.</p>
+          <button
+            onClick={() => { void downloadCurrentReport() }}
+            disabled={reportDownloading}
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-brand-700 disabled:cursor-wait disabled:opacity-60"
+          >
+            <Download size={15} aria-hidden="true" /> {reportDownloading ? 'Preparing Report…' : 'Download Report'}
+          </button>
+          {reportDownloaded && <p role="status" className="w-full text-xs text-emerald-700">Report downloaded with current BHUMI-X results.</p>}
+          {reportDownloadError && <p role="alert" className="w-full text-xs text-red-700">Could not download report: {reportDownloadError}</p>}
+        </div>
         {stats && (
           <div className="card grid grid-cols-2 gap-4 p-5 md:grid-cols-4">
             <div><div className="text-[10.5px] text-ink-400">Total Records</div><div className="text-xl font-extrabold text-ink-900">{stats.total_parcels}</div></div>

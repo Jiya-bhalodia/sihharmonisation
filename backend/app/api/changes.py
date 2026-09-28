@@ -15,7 +15,6 @@ from app.config import get_settings
 router = APIRouter()
 
 
-@router.get("", response_model=List[ChangeEventOut])
 def _mask_personal_fields(value):
     if isinstance(value, dict):
         return {key: ("REDACTED" if key.lower() in {"owner", "owner_name", "landholder", "property_owner"}
@@ -25,6 +24,7 @@ def _mask_personal_fields(value):
     return value
 
 
+@router.get("", response_model=List[ChangeEventOut])
 def get_changes(db: Session = Depends(get_db), change_type: Optional[str] = Query(None),
                 user: User | None = Depends(current_user)):
     # ChangeEvent rows can be inspected, but this hosted profile deliberately
