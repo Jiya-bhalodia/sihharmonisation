@@ -3,6 +3,7 @@ import { CheckCircle2, ShieldAlert } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import { useApi } from '../hooks/useApi'
 import { api } from '../services/api'
+import { displayDatasetName } from '../services/displayNames'
 
 export default function TopologyPage() {
   const { data: quality } = useApi(() => api.getDataQuality())
@@ -61,7 +62,7 @@ export default function TopologyPage() {
             <tbody>
               {(quality || []).map((d) => (
                 <tr key={d.dataset_id} className="border-b border-ink-50">
-                  <td className="px-4 py-3 font-semibold text-ink-800">{d.name}</td>
+                  <td className="px-4 py-3 font-semibold text-ink-800">{displayDatasetName(d.name)}</td>
                   <td className="px-4 py-3 text-ink-500">{d.source_type}</td>
                   <td className="px-4 py-3 text-ink-700">{d.feature_count}</td>
                   <td className="px-4 py-3 text-ink-700">{d.invalid_geometry_count}</td>

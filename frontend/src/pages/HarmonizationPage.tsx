@@ -116,7 +116,6 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
               New uploads automatically refresh outputs. This runs CRS normalization → schema mapping → spatial matching → topology validation → conflict
               detection → confidence scoring → unified record generation, in sequence, against live data.
             </p>
-            {freeDemoMode && <p className="mt-2 text-xs text-amber-800">Hosted demo jobs run synchronously with feature and geometry limits. Snapshot-based change detection, raster/model/OCR processing are disabled.</p>}
           </div>
           {(userRole !== 'evaluator' || freeDemoMode) && <button
             onClick={handleRun}

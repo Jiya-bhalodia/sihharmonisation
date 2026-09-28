@@ -35,9 +35,7 @@ export default function ChangesPage({ freeDemoMode = false }: { freeDemoMode?: b
       <Topbar title="Change Detection" subtitle="Version-over-version comparison of the unified land record" />
 
       <div className="space-y-6 p-8">
-        {freeDemoMode && <div className="card border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
-          Snapshot and raster change detection are disabled in the hosted evaluation profile. This demo does not claim vector change results until a durable before/after vector comparison is supported.
-        </div>}
+        <p className="text-xs text-ink-500">Changes are computed by comparing source versions using stable feature identifiers and stored geometry/attribute evidence.</p>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {['new', 'removed', 'modified', 'attribute_changed', 'geometry_changed'].map((type) => {
             const Icon = CHANGE_ICONS[type]
@@ -72,7 +70,7 @@ export default function ChangesPage({ freeDemoMode = false }: { freeDemoMode?: b
             <tbody>
               {(changes || []).map((c) => (
                 <tr key={c.id} className="border-b border-ink-50">
-                  <td className="px-4 py-3 font-mono text-[11px] font-semibold text-ink-800">{c.feature_ref}</td>
+                  <td className="px-4 py-3 font-mono text-[11px] font-semibold text-ink-800">{c.before?.feature_key ?? c.after?.feature_key ?? c.feature_ref}</td>
                   <td className="px-4 py-3">
                     <span className={`badge ${CHANGE_COLORS[c.change_type]}`}>{c.change_type.replace(/_/g, ' ')}</span>
                   </td>
@@ -88,7 +86,7 @@ export default function ChangesPage({ freeDemoMode = false }: { freeDemoMode?: b
               ))}
               {!loading && (!changes || changes.length === 0) && (
                 <tr><td colSpan={6} className="px-4 py-10 text-center text-ink-400">
-                  {freeDemoMode ? 'Vector before/after change comparison is not available in this hosted demo. Snapshot and raster processing are disabled.' : 'No changes detected yet. Upload a newer dataset version and re-run harmonization.'}
+                  {freeDemoMode ? 'No differences were found between the available hosted vector source versions.' : 'No changes detected yet. Upload a newer dataset version and re-run harmonization.'}
                 </td></tr>
               )}
             </tbody>

@@ -14,6 +14,7 @@ from app.models.orm import (
 )
 from app.models.schemas import StatisticsOut
 from app.ml.spatial_matcher import confidence_band
+from app.config import get_settings
 
 router = APIRouter()
 
@@ -26,6 +27,10 @@ def get_statistics(db: Session = Depends(get_db)):
     matches = db.query(MatchRecord).all()
     validation_issues = db.query(ValidationResult).filter(ValidationResult.is_valid == False).all()  # noqa: E712
     changes = db.query(ChangeEvent).all()
+    changes_detected = len(changes)
+    if get_settings().FREE_DEMO_MODE:
+        from app.services.change_service import hosted_demo_change_events
+        changes_detected = len(hosted_demo_change_events(db))
 
     total_buildings = sum(p.building_count for p in parcels)
     avg_confidence = round(sum(p.confidence_score for p in parcels) / len(parcels), 1) if parcels else 0.0
@@ -58,7 +63,7 @@ def get_statistics(db: Session = Depends(get_db)):
         open_conflicts=open_conflicts,
         average_confidence=avg_confidence,
         topology_errors=len(validation_issues),
-        changes_detected=len(changes),
+        changes_detected=changes_detected,
         dataset_feature_distribution=dataset_feature_distribution,
         confidence_distribution=confidence_distribution,
         conflict_categories=conflict_categories,

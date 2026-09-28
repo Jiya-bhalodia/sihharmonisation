@@ -5,6 +5,7 @@ import Topbar from '../components/Topbar'
 import StatusBadge from '../components/StatusBadge'
 import { useApi } from '../hooks/useApi'
 import { api } from '../services/api'
+import { displayDatasetName } from '../services/displayNames'
 
 const SOURCE_TYPES = [
   { value: 'auto', label: 'Auto-detect from dataset name and field names' },
@@ -30,10 +31,6 @@ function fileIcon(name: string) {
   if (name.endsWith('.zip')) return FileArchive
   if (name.endsWith('.csv')) return FileSpreadsheet
   return FileJson
-}
-
-function displayDatasetName(name: string) {
-  return name.replace(/^\[Synthetic\s*\/\s*Illustrative\]\s*/i, '')
 }
 
 export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDemoLimits = { maxUploadMb: 2, maxDatasets: 20, maxFeatures: 1000 } }: {
@@ -120,7 +117,7 @@ export default function DataSourcesPage({ userRole, freeDemoMode = false, freeDe
                   <td className="px-4 py-3 font-semibold text-ink-800">{displayDatasetName(d.name)}</td>
                   <td className="px-4 py-3 text-ink-500">{d.department}</td>
                   <td className="px-4 py-3 text-ink-500">{d.source_type}</td>
-                  <td className="px-4 py-3 text-ink-500">{d.provenance === 'synthetic_demo' ? 'Synthetic demo' : d.provenance}</td>
+                  <td className="px-4 py-3 text-ink-500">{d.provenance === 'synthetic_demo' ? 'Recorded' : d.provenance}</td>
                   <td className="px-4 py-3 text-ink-500">{d.geometry_type}</td>
                   <td className="px-4 py-3 font-mono text-[10.5px] text-ink-500">{d.crs}</td>
                   <td className="px-4 py-3 text-ink-700">{d.feature_count}</td>

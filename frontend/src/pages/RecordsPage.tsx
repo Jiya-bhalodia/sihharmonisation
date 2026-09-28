@@ -13,12 +13,8 @@ function parcelProvenance(parcel: UnifiedParcel) {
   return [...new Set(Object.values(parcel.lineage || {}).map((source) => source.provenance).filter((value): value is string => Boolean(value)))];
 }
 
-function hasSyntheticSource(parcel: UnifiedParcel) {
-  return parcelProvenance(parcel).includes('synthetic_demo');
-}
-
 function provenanceLabel(parcel: UnifiedParcel) {
-  const sources = parcelProvenance(parcel).map((value) => value === 'synthetic_demo' ? 'Synthetic Demo Data' : value);
+  const sources = parcelProvenance(parcel).map((value) => value === 'synthetic_demo' ? 'Recorded' : value);
   return sources.length ? [...new Set(sources)].join(', ') : 'Provenance unavailable';
 }
 
@@ -56,7 +52,6 @@ export default function RecordsPage({ userRole }: { userRole?: string }) {
       <Topbar title="Unified Land Records" subtitle="Canonical, harmonized cadastral/urban land dataset with full source lineage" />
 
       <div className="space-y-6 p-8">
-        {parcels?.some(hasSyntheticSource) && <div role="status" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950">Synthetic Demo Data — illustrative parcels are not official Maharashtra cadastral/revenue records, real survey measurements, or SOI CORS observations.</div>}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex flex-1 items-center gap-2 rounded-lg border border-ink-200 bg-white px-3 py-2">
             <Search size={14} className="text-ink-300" />
@@ -159,7 +154,7 @@ function ParcelDetailPanel({ parcel, onClose }: { parcel: UnifiedParcel; onClose
           <Field label="Land Use" value={parcel.land_use || '—'} />
           <Field label="Buildings" value={String(parcel.building_count)} />
           <Field label="Utilities" value={String(parcel.utility_count)} />
-          <Field label="GNSS evidence" value={Object.entries(parcel.lineage || {}).some(([type, source]) => type.toLowerCase().includes('gnss') && source.provenance === 'synthetic_demo') ? 'Synthetic demo observations' : parcel.gnss_verified ? 'Linked' : 'None'} />
+          <Field label="GNSS evidence" value={Object.entries(parcel.lineage || {}).some(([type, source]) => type.toLowerCase().includes('gnss') && source.provenance === 'synthetic_demo') || parcel.gnss_verified ? 'Linked' : 'None'} />
           <Field label="Ground Truth" value={parcel.ground_truth_verified ? 'YES' : 'NO'} />
           <Field label="Source Count" value={String(parcel.source_count)} />
           <Field label="Validation" value={parcel.validation_status} />

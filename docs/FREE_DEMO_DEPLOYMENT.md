@@ -97,7 +97,7 @@ Provider terms and quotas can change. A free-tier plan may pause, sleep, become 
 
 ## Data durability and backups
 
-PostgreSQL rows and Supabase Storage originals are stored outside the Render container. `previous_snapshot.json` is **not** durable in this profile: snapshot-based change detection is intentionally disabled, and `/api/changes` returns an empty list. Do not describe cross-restart change detection as supported.
+PostgreSQL rows and Supabase Storage originals are stored outside the Render container. `previous_snapshot.json` is **not** durable in this profile, so hosted Change Detection compares the seeded municipal features with the bundled `drone_buildings_v2.geojson` follow-up fixture. When two municipal source versions are present in PostgreSQL, it compares those persisted versions instead. These vector comparisons are computed by the existing stable-ID/property/geometry comparison logic; the local filesystem snapshot workflow remains disabled in hosted mode.
 
 Before loading demo data, configure an independent backup/export process for Supabase database and Storage objects and test recovery on a disposable project. This repository’s Docker `backup.sh` and `restore.sh` operate on local Compose volumes; they are not a backup mechanism for these hosted providers. Keep the bucket private and retain any desired records until a recovery plan has been checked.
 

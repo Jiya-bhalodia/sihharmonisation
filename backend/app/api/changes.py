@@ -11,6 +11,7 @@ from app.models.schemas import ChangeEventOut
 from app.models.orm import User
 from app.security import current_user
 from app.config import get_settings
+from app.services.change_service import hosted_demo_change_events
 
 router = APIRouter()
 
@@ -28,9 +29,18 @@ def _mask_personal_fields(value):
 def get_changes(db: Session = Depends(get_db), change_type: Optional[str] = Query(None),
                 user: User | None = Depends(current_user)):
     # ChangeEvent rows can be inspected, but this hosted profile deliberately
-    # does not compare or claim durability for the filesystem snapshot.
+    # uses a deterministic vector fixture comparison instead of a local disk snapshot.
     if get_settings().FREE_DEMO_MODE:
-        return []
+        events = hosted_demo_change_events(db)
+        if change_type:
+            events = [event for event in events if event["change_type"] == change_type]
+        if user is None or user.role in {"revenue_officer", "reviewer", "administrator"}:
+            return [ChangeEventOut.model_validate(event) for event in events]
+        return [ChangeEventOut.model_validate({
+            **event,
+            "before": _mask_personal_fields(event.get("before")),
+            "after": _mask_personal_fields(event.get("after")),
+        }) for event in events]
     query = db.query(ChangeEvent)
     if change_type:
         query = query.filter(ChangeEvent.change_type == change_type)

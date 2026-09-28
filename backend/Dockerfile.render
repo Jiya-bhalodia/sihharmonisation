@@ -23,6 +23,8 @@ COPY data/sample/utility_lines.geojson /app/data/sample/utility_lines.geojson
 COPY data/sample/gnss_survey_points.csv /app/data/sample/gnss_survey_points.csv
 COPY data/sample/land_use.geojson /app/data/sample/land_use.geojson
 COPY data/sample/hosted_demo_aoi.geojson /app/data/sample/hosted_demo_aoi.geojson
+# Used as the follow-up municipal vector version by hosted Change Detection.
+COPY data/sample/drone_buildings_v2.geojson /app/data/sample/drone_buildings_v2.geojson
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     SAMPLE_DATA_DIR=/app/data/sample
