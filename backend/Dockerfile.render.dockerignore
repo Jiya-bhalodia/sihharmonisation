@@ -29,3 +29,4 @@ data/sample/*
 !data/sample/gnss_survey_points.csv
 !data/sample/land_use.geojson
 !data/sample/hosted_demo_aoi.geojson
+!data/sample/drone_buildings_v2.geojson
