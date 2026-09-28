@@ -97,8 +97,15 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         if (requestSettled) break
         try {
           const jobs = await api.listJobs()
-          const activeJob = jobs.find((candidate) => candidate.id !== previousJobId
-            && Date.parse(candidate.started_at) >= requestStartedAt - 15_000)
+          const activeJob = jobs.find((candidate) => {
+            if (candidate.id === previousJobId) return false
+            // SQLAlchemy serializes naive UTC datetimes without a timezone;
+            // parse those as UTC rather than the browser's local timezone.
+            const timestamp = /(?:Z|[+-]\d{2}:\d{2})$/i.test(candidate.started_at)
+              ? candidate.started_at
+              : `${candidate.started_at}Z`
+            return Date.parse(timestamp) >= requestStartedAt - 15_000
+          })
           if (activeJob) {
             latestJobId.current = activeJob.id
             setJob(activeJob)
