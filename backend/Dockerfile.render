@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/app ./app
 COPY backend/migrations ./migrations
 COPY backend/run_seed.py ./run_seed.py
+COPY backend/hosted_demo_snapshot.v1.json ./hosted_demo_snapshot.v1.json
 # Only reviewed generated fixtures required by run_seed.py are included.
 COPY data/sample/cadastral_parcels.geojson /app/data/sample/cadastral_parcels.geojson
 COPY data/sample/revenue_records.geojson /app/data/sample/revenue_records.geojson

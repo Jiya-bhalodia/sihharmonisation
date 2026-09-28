@@ -44,12 +44,8 @@ def on_startup():
     if settings.LOAD_SAMPLE_DATA or settings.FREE_DEMO_MODE:
         logger.info("Starting synthetic sample data seed (free_demo_mode=%s, load_sample_data=%s)",
                     settings.FREE_DEMO_MODE, settings.LOAD_SAMPLE_DATA)
-        try:
-            from run_seed import seed
-            loaded = seed()
-        except Exception:
-            logger.exception("Synthetic sample data seed failed; startup will not continue")
-            raise
+        from run_seed import seed
+        loaded = seed()
         logger.info("Synthetic sample data seed %s", "completed" if loaded else "skipped; already seeded")
 
 

@@ -1,0 +1,3101 @@
+{
+  "payload": {
+    "format": "bhumix-hosted-demo-snapshot",
+    "schema_version": 1,
+    "application_version": "1.1.0",
+    "target_crs": "EPSG:4326",
+    "provenance": "synthetic_demo",
+    "source_fixtures": [
+      "cadastral_parcels.geojson",
+      "gnss_survey_points.csv",
+      "ground_truth_points.geojson",
+      "land_use.geojson",
+      "municipal_buildings.geojson",
+      "revenue_records.geojson",
+      "utility_lines.geojson"
+    ],
+    "record_counts": {
+      "datasets": 7,
+      "features": 55,
+      "unified_parcels": 11,
+      "matches": 29,
+      "conflicts": 21,
+      "attribute_mappings": 31,
+      "validation_results": 2,
+      "harmonization_jobs": 1
+    },
+    "records": {
+      "datasets": [
+        {
+          "id": "DS-45cfa362df95",
+          "name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+          "department": "Survey Department",
+          "source_type": "cadastral",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Polygon",
+          "crs": "EPSG:4326",
+          "feature_count": 11,
+          "quality_score": 94.5,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.145278"
+        },
+        {
+          "id": "DS-804e43076809",
+          "name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+          "department": "Revenue Department",
+          "source_type": "revenue",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Polygon",
+          "crs": "EPSG:4326",
+          "feature_count": 10,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.169944"
+        },
+        {
+          "id": "DS-768713f245c3",
+          "name": "[Synthetic / Illustrative] Municipal Building Register",
+          "department": "Municipal Corporation",
+          "source_type": "municipal",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Polygon",
+          "crs": "EPSG:32643",
+          "feature_count": 10,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.181079"
+        },
+        {
+          "id": "DS-7de98a9649ee",
+          "name": "[Synthetic / Illustrative] Field Verification Points",
+          "department": "Ground Truthing Team",
+          "source_type": "ground_truth",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Point",
+          "crs": "EPSG:4326",
+          "feature_count": 1,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.207177"
+        },
+        {
+          "id": "DS-d5b3055c3d69",
+          "name": "[Synthetic / Illustrative] Utility Network (Water/Power/Sewer)",
+          "department": "Utility Department",
+          "source_type": "utility",
+          "provenance": "synthetic_demo",
+          "geometry_type": "LineString",
+          "crs": "EPSG:4326",
+          "feature_count": 12,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.208564"
+        },
+        {
+          "id": "DS-d1f6556cbf8b",
+          "name": "[Synthetic / Illustrative] Land Use Inventory - Ward 07",
+          "department": "Municipal Corporation",
+          "source_type": "land_use",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Polygon",
+          "crs": "EPSG:4326",
+          "feature_count": 1,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.210594"
+        },
+        {
+          "id": "DS-492b2dadd73f",
+          "name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+          "department": "Survey Department",
+          "source_type": "gnss",
+          "provenance": "synthetic_demo",
+          "geometry_type": "Point",
+          "crs": "EPSG:4326",
+          "feature_count": 10,
+          "quality_score": 100.0,
+          "status": "uploaded",
+          "uploaded_at": "2026-09-28T10:04:20.445026"
+        }
+      ],
+      "features": [
+        {
+          "id": "FT-92edcdb39ac9",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0103",
+            "owner": "Rekha Jadhav",
+            "area_sq_m": 4649.3,
+            "land_use": "Vacant",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25011, 16.70956], [74.25074, 16.70956], [74.25074, 16.71018157384986], [74.25011842615015, 16.710189999999997], [74.25011, 16.70956]]]}",
+          "centroid_lat": 16.70987220080127,
+          "centroid_lon": 74.25042639496769,
+          "area_sqm": 4619.154442883979,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.161011"
+        },
+        {
+          "id": "FT-b15f0660b66f",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0109",
+            "owner": "Anil More",
+            "area_sq_m": 4457.4,
+            "land_use": "Commercial",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25161000000001, 16.71256], [74.25224, 16.71256], [74.25224, 16.713155002773323], [74.25164499722669, 16.713189999999997], [74.25161000000001, 16.71256]]]}",
+          "centroid_lat": 16.712863505518623,
+          "centroid_lon": 74.25193067112401,
+          "area_sqm": 4428.446326788798,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.161579"
+        },
+        {
+          "id": "FT-d2164de9bdb9",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0113",
+            "owner": "Priya Shinde",
+            "area_sq_m": 4681.6,
+            "land_use": "Commercial",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24411, 16.70806], [74.24474, 16.70806], [74.24474, 16.708685946414008], [74.244114053586, 16.708689999999997], [74.24411, 16.70806]]]}",
+          "centroid_lat": 16.708373650992183,
+          "centroid_lon": 74.24442567342422,
+          "area_sqm": 4651.371345110155,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.162011"
+        },
+        {
+          "id": "FT-e98ad71a4086",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0115",
+            "owner": "Deepak Kulkarni",
+            "area_sq_m": 4658.9,
+            "land_use": "Institutional",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24561000000001, 16.70581], [74.24624, 16.70581], [74.24624, 16.706432872045955], [74.24561712795406, 16.706439999999997], [74.24561000000001, 16.70581]]]}",
+          "centroid_lat": 16.706122630812384,
+          "centroid_lon": 74.24592618127218,
+          "area_sqm": 4628.779409450627,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.162397"
+        },
+        {
+          "id": "FT-20717cd06f8a",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0116",
+            "owner": "Lata More",
+            "area_sq_m": 4600.4,
+            "land_use": "Mixed Use",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25386, 16.70581], [74.25448999999999, 16.70581], [74.25448999999999, 16.706424909985483], [74.25387509001452, 16.706439999999997], [74.25386, 16.70581]]]}",
+          "centroid_lat": 16.706120000845427,
+          "centroid_lon": 74.2541774848911,
+          "area_sqm": 4570.641810841091,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.162766"
+        },
+        {
+          "id": "FT-6d51c6488db7",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0117",
+            "owner": "Vijay More",
+            "area_sq_m": 4450.4,
+            "land_use": "Institutional",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24936000000001, 16.70806], [74.24999, 16.70806], [74.24999, 16.70865400629986], [74.24939599370015, 16.708689999999997], [74.24936000000001, 16.70806]]]}",
+          "centroid_lat": 16.70836318353851,
+          "centroid_lon": 74.24968082787755,
+          "area_sqm": 4421.565039249555,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.163200"
+        },
+        {
+          "id": "FT-a3db7cfe52b4",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0118",
+            "owner": "Prakash Chavan",
+            "area_sq_m": 4605.4,
+            "land_use": "Vacant",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24711, 16.71406], [74.24774, 16.71406], [74.24774, 16.71467560080747], [74.24712439919253, 16.714689999999997], [74.24711, 16.71406]]]}",
+          "centroid_lat": 16.714370228328644,
+          "centroid_lon": 74.24742737244725,
+          "area_sqm": 4575.475075471615,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.163559"
+        },
+        {
+          "id": "FT-475fa7944a7c",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0119",
+            "owner": "Prakash Bhosale",
+            "area_sq_m": 4588.5,
+            "land_use": "Vacant",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24786, 16.70731], [74.24848999999999, 16.70731], [74.24848999999999, 16.707923278239544], [74.24787672176046, 16.707939999999997], [74.24786, 16.70731]]]}",
+          "centroid_lat": 16.707619464060993,
+          "centroid_lon": 74.24817774998705,
+          "area_sqm": 4558.799271671883,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.164050"
+        },
+        {
+          "id": "FT-7bc9f6921dcf",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0129",
+            "owner": "Vijay Joshi",
+            "area_sq_m": 4445.9,
+            "land_use": "Institutional",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24786, 16.70656], [74.24848999999999, 16.70656], [74.24848999999999, 16.70715337723664], [74.24789662276336, 16.707189999999997], [74.24786, 16.70656]]]}",
+          "centroid_lat": 16.706862980435528,
+          "centroid_lon": 74.24818092670064,
+          "area_sqm": 4417.196683007459,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.164591"
+        },
+        {
+          "id": "FT-9864eb238e93",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0131",
+            "owner": "Shobha Bhosale",
+            "area_sq_m": 4606.4,
+            "land_use": "Commercial",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24486, 16.71106], [74.24548999999999, 16.71106], [74.24548999999999, 16.711675735824016], [74.24487426417598, 16.711689999999997], [74.24486, 16.71106]]]}",
+          "centroid_lat": 16.71137027280452,
+          "centroid_lon": 74.24517735045612,
+          "area_sqm": 4576.530067773586,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.165077"
+        },
+        {
+          "id": "FT-63de76a009ff",
+          "dataset_id": "DS-45cfa362df95",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-9001",
+            "owner": "Bowtie Test Parcel",
+            "area_sq_m": 4200.0,
+            "land_use": "Vacant",
+            "ward": "Ward-07"
+          },
+          "geometry_geojson": "{\"type\": \"MultiPolygon\", \"coordinates\": [[[[74.24555000000001, 16.708], [74.245925, 16.707624999999997], [74.24555000000001, 16.70725], [74.24555000000001, 16.708]]], [[[74.2463, 16.70725], [74.245925, 16.707624999999997], [74.2463, 16.708], [74.2463, 16.70725]]]]}",
+          "centroid_lat": 16.707624999999997,
+          "centroid_lon": 74.24592500000003,
+          "area_sqm": 3317.3261889185287,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.165551"
+        },
+        {
+          "id": "FT-12f81c8d60a0",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0103",
+            "landholder": "Rekha Jadhav",
+            "area": 4330.2,
+            "classification": "Vacant",
+            "khasra_no": "KH-0103"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25024594538692, 16.70971743702607], [74.250571668381, 16.70971743702607], [74.250571668381, 16.710034901868223], [74.25025420353884, 16.71004316002014], [74.25024594538692, 16.70971743702607]]]}",
+          "centroid_lat": 16.709877563701376,
+          "centroid_lon": 74.25041016580076,
+          "area_sqm": 1220.0484064320665,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.170758"
+        },
+        {
+          "id": "FT-b08c39ecc187",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0109",
+            "landholder": "Anil More",
+            "area": 4695.4,
+            "classification": "Commercial",
+            "khasra_no": "KH-0109"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2519985605035, 16.712979145092707], [74.25183578274716, 16.712979145092707], [74.25183578274716, 16.712810451830173], [74.2520044760097, 16.712816367336387], [74.2519985605035, 16.712979145092707]]]}",
+          "centroid_lat": 16.712895767103742,
+          "centroid_lon": 74.25191817544624,
+          "area_sqm": 324.0800321972823,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.171562"
+        },
+        {
+          "id": "FT-8841eeae0c99",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0113",
+            "landholder": "Priya Shinde",
+            "area": 4651.9,
+            "classification": "Commercial",
+            "khasra_no": "KH-0113"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24448582107537, 16.708473990647384], [74.24433087097074, 16.708473990647384], [74.24433087097074, 16.708288418545063], [74.24451644307308, 16.708319040542772], [74.24448582107537, 16.708473990647384]]]}",
+          "centroid_lat": 16.708385893930146,
+          "centroid_lon": 74.2444139459041,
+          "area_sqm": 344.6855187604114,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.172128"
+        },
+        {
+          "id": "FT-38afd5a5904b",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0115",
+            "landholder": "Deepak Kulkarni",
+            "area": 4798.2,
+            "classification": "Institutional",
+            "khasra_no": "KH-0115"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2456311691611, 16.705826137391096], [74.24622122128075, 16.705826137391096], [74.24622122128075, 16.70638594535314], [74.24566141331871, 16.706416189510755], [74.2456311691611, 16.705826137391096]]]}",
+          "centroid_lat": 16.7061112180409,
+          "centroid_lon": 74.2459311069077,
+          "area_sqm": 3901.479729204847,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.173317"
+        },
+        {
+          "id": "FT-28a1bb3247cb",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0116",
+            "landholder": "Lata More",
+            "area": 4730.9,
+            "classification": "Mixed Use",
+            "khasra_no": "KH-0116"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25398827162117, 16.705920682109078], [74.25435218193888, 16.705920682109078], [74.25435218193888, 16.706249328789152], [74.25402353525882, 16.706284592426805], [74.25398827162117, 16.705920682109078]]]}",
+          "centroid_lat": 16.70609119640563,
+          "centroid_lon": 74.25417582076597,
+          "area_sqm": 1417.989790068627,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.174525"
+        },
+        {
+          "id": "FT-f2bc5b3268d1",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0117",
+            "landholder": "VIJAY MORE",
+            "area": 4535.3,
+            "classification": "Institutional",
+            "khasra_no": "KH-0117"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24967820983498, 16.708400713695372], [74.24964584453363, 16.708400713695372], [74.24964584453363, 16.708343453875163], [74.24970310435384, 16.708368348394025], [74.24967820983498, 16.708400713695372]]]}",
+          "centroid_lat": 16.70837546013901,
+          "centroid_lon": 74.24966754336876,
+          "area_sqm": 25.51348888058627,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.175557"
+        },
+        {
+          "id": "FT-d244e25e8985",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0118",
+            "landholder": "Prakash Chavan",
+            "area": 4871.0,
+            "classification": "Vacant",
+            "khasra_no": "KH-0118"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24730110113308, 16.714218698068997], [74.24757141355649, 16.714218698068997], [74.24757141355649, 16.71445553574893], [74.24733457587656, 16.71448901049241], [74.24730110113308, 16.714218698068997]]]}",
+          "centroid_lat": 16.714343086890178,
+          "centroid_lon": 74.24744149401408,
+          "area_sqm": 761.6956771244097,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.176612"
+        },
+        {
+          "id": "FT-884faf2c4bd9",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0119",
+            "landholder": "Prakash Bhosale",
+            "area": 4838.0,
+            "classification": "Vacant",
+            "khasra_no": "KH-0119"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24792862524383, 16.70740331075298], [74.24841538312702, 16.70740331075298], [74.24841538312702, 16.7078618770067], [74.24795681687333, 16.707890068636193], [74.24792862524383, 16.70740331075298]]]}",
+          "centroid_lat": 16.70763743665795,
+          "centroid_lon": 74.24817656696723,
+          "area_sqm": 2637.4411460979195,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.177293"
+        },
+        {
+          "id": "FT-93ddc4e40bb5",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0129",
+            "landholder": "Vijay Joshi",
+            "area": 4252.0,
+            "classification": "Vacant",
+            "khasra_no": "KH-0129"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24807211815758, 16.706783066513292], [74.24822994497539, 16.706783066513292], [74.24822994497539, 16.706933613921915], [74.24807939756676, 16.706940893331094], [74.24807211815758, 16.706783066513292]]]}",
+          "centroid_lat": 16.706859582751527,
+          "centroid_lon": 74.24815221685365,
+          "area_sqm": 280.56599005540204,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.177741"
+        },
+        {
+          "id": "FT-89e89947b5af",
+          "dataset_id": "DS-804e43076809",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "survey_no": "P-0131",
+            "landholder": "Shobhaa Bhosale",
+            "area": 4657.0,
+            "classification": "Commercial",
+            "khasra_no": "KH-0131"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24527413847825, 16.711456668157883], [74.24508648453838, 16.711456668157883], [74.24508648453838, 16.711252933099164], [74.24529021959711, 16.71126901421802], [74.24527413847825, 16.711456668157883]]]}",
+          "centroid_lat": 16.711357375395927,
+          "centroid_lon": 74.24518310614782,
+          "area_sqm": 452.4569593623006,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.178147"
+        },
+        {
+          "id": "FT-45ed8e050130",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0103-1",
+            "owner_name": "Rekha Jadhav",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0103"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2501625, 16.709612499999995], [74.2503875, 16.7096125], [74.2503875, 16.7098375], [74.2501625, 16.7098375], [74.2501625, 16.709612499999995]]]}",
+          "centroid_lat": 16.709725,
+          "centroid_lon": 74.25027500000002,
+          "area_sqm": 597.1112055430771,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.183662"
+        },
+        {
+          "id": "FT-1e9e986cb89c",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0109-1",
+            "owner_name": "Anil More",
+            "plot_area": 601.0,
+            "usage_type": "Commercial",
+            "linked_parcel": "P-0109"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25166250000001, 16.712612499999995], [74.25188750000001, 16.712612500000002], [74.25188750000001, 16.712837500000003], [74.25166250000001, 16.7128375], [74.25166250000001, 16.712612499999995]]]}",
+          "centroid_lat": 16.712725000000002,
+          "centroid_lon": 74.25177500000001,
+          "area_sqm": 597.1016695556492,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.186396"
+        },
+        {
+          "id": "FT-41f115c84a83",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0116-1",
+            "owner_name": "Lata More",
+            "plot_area": 601.0,
+            "usage_type": "Mixed Use",
+            "linked_parcel": "P-0116"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2539125, 16.705862499999995], [74.2541375, 16.705862499999995], [74.2541375, 16.70608749999999], [74.2539125, 16.706087499999995], [74.2539125, 16.705862499999995]]]}",
+          "centroid_lat": 16.705974999999995,
+          "centroid_lon": 74.254025,
+          "area_sqm": 597.1217099619477,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.191523"
+        },
+        {
+          "id": "FT-9f5220c2d147",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0118-1",
+            "owner_name": "Prakash Chavan",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0118"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2471625, 16.714112500000002], [74.2473875, 16.714112500000002], [74.2473875, 16.714337499999996], [74.2471625, 16.7143375], [74.2471625, 16.714112500000002]]]}",
+          "centroid_lat": 16.714225,
+          "centroid_lon": 74.247275,
+          "area_sqm": 597.0982234879897,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.194340"
+        },
+        {
+          "id": "FT-8eacc85260c3",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0118-2",
+            "owner_name": "Prakash Chavan",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0118"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2473875, 16.714337499999996], [74.2476125, 16.714337500000003], [74.2476125, 16.7145625], [74.2473875, 16.714562499999996], [74.2473875, 16.714337499999996]]]}",
+          "centroid_lat": 16.71445,
+          "centroid_lon": 74.2475,
+          "area_sqm": 597.0974796165865,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.196406"
+        },
+        {
+          "id": "FT-ee34f39cbe66",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0118-3",
+            "owner_name": "Prakash Chavan",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0118"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2474625, 16.714412499999998], [74.2476875, 16.714412499999998], [74.2476875, 16.7146375], [74.2474625, 16.714637499999995], [74.2474625, 16.714412499999998]]]}",
+          "centroid_lat": 16.714525,
+          "centroid_lon": 74.247575,
+          "area_sqm": 597.097231648651,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.198329"
+        },
+        {
+          "id": "FT-74d58b84d599",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0119-1",
+            "owner_name": "Prakash Bhosale",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0119"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2479125, 16.7073625], [74.2481375, 16.707362499999995], [74.2481375, 16.7075875], [74.2479125, 16.707587499999995], [74.2479125, 16.7073625]]]}",
+          "centroid_lat": 16.707475,
+          "centroid_lon": 74.248025,
+          "area_sqm": 597.1186408533631,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.200241"
+        },
+        {
+          "id": "FT-7660e5543058",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0119-2",
+            "owner_name": "Prakash Bhosale",
+            "plot_area": 601.0,
+            "usage_type": "Vacant",
+            "linked_parcel": "P-0119"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2481375, 16.7075875], [74.2483625, 16.707587499999995], [74.2483625, 16.7078125], [74.2481375, 16.7078125], [74.2481375, 16.7075875]]]}",
+          "centroid_lat": 16.7077,
+          "centroid_lon": 74.24825,
+          "area_sqm": 597.1178972695325,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.202119"
+        },
+        {
+          "id": "FT-938bb0c99fdb",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0129-1",
+            "owner_name": "Vijaay Joshi",
+            "plot_area": 601.0,
+            "usage_type": "Institutional",
+            "linked_parcel": "P-0129"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2479125, 16.706612499999995], [74.2481375, 16.706612499999995], [74.2481375, 16.7068375], [74.2479125, 16.7068375], [74.2479125, 16.706612499999995]]]}",
+          "centroid_lat": 16.706724999999995,
+          "centroid_lon": 74.248025,
+          "area_sqm": 597.12092999414,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.203902"
+        },
+        {
+          "id": "FT-36fde4851d44",
+          "dataset_id": "DS-768713f245c3",
+          "canonical_type": "building",
+          "raw_properties": {
+            "property_id": "B-0129-2",
+            "owner_name": "Vijay Joshi",
+            "plot_area": 601.0,
+            "usage_type": "Institutional",
+            "linked_parcel": "P-0129"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.2481375, 16.7068375], [74.2483625, 16.7068375], [74.2483625, 16.707062499999992], [74.2481375, 16.7070625], [74.2481375, 16.7068375]]]}",
+          "centroid_lat": 16.70695,
+          "centroid_lon": 74.24825,
+          "area_sqm": 597.1201864368908,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.205582"
+        },
+        {
+          "id": "FT-1db694368827",
+          "dataset_id": "DS-7de98a9649ee",
+          "canonical_type": "ground_truth",
+          "raw_properties": {
+            "gt_id": "GT-0131",
+            "parcel_id": "P-0131",
+            "field_verified": true,
+            "verification_date": "2026-02-14",
+            "notes": "Verified via local witness"
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.24517170486195, 16.71138563679119]}",
+          "centroid_lat": 16.71138563679119,
+          "centroid_lon": 74.24517170486195,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.207487"
+        },
+        {
+          "id": "FT-15e9208e7480",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-001",
+            "utility_type": "power_line",
+            "department": "Utility Department",
+            "install_year": 2014
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2523, 16.70980719324954], [74.25305, 16.70980719324954]]}",
+          "centroid_lat": 16.70980719324954,
+          "centroid_lon": 74.25267500000001,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.208824"
+        },
+        {
+          "id": "FT-29545ef2861f",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-002",
+            "utility_type": "water_main",
+            "department": "Utility Department",
+            "install_year": 2009
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.25155000000001, 16.710679352308134], [74.2523, 16.710679352308134]]}",
+          "centroid_lat": 16.710679352308134,
+          "centroid_lon": 74.251925,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.208888"
+        },
+        {
+          "id": "FT-c03513bf9bf5",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-003",
+            "utility_type": "power_line",
+            "department": "Utility Department",
+            "install_year": 2016
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2508, 16.711278275108246], [74.25229999999999, 16.711278275108246]]}",
+          "centroid_lat": 16.711278275108246,
+          "centroid_lon": 74.25155,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.208937"
+        },
+        {
+          "id": "FT-008984320063",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-004",
+            "utility_type": "power_line",
+            "department": "Utility Department",
+            "install_year": 2021
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2478, 16.712024054084356], [74.24929999999999, 16.712024054084356]]}",
+          "centroid_lat": 16.712024054084356,
+          "centroid_lon": 74.24855,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.208985"
+        },
+        {
+          "id": "FT-05a5bd8edd7a",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-005",
+            "utility_type": "water_main",
+            "department": "Utility Department",
+            "install_year": 2003
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2448, 16.714233235146967], [74.24629999999999, 16.714233235146967]]}",
+          "centroid_lat": 16.714233235146967,
+          "centroid_lon": 74.24555,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209034"
+        },
+        {
+          "id": "FT-9e6a7bb8df94",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-006",
+            "utility_type": "sewer_line",
+            "department": "Utility Department",
+            "install_year": 2005
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.25305, 16.712982133356228], [74.2538, 16.712982133356228]]}",
+          "centroid_lat": 16.712982133356228,
+          "centroid_lon": 74.253425,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209082"
+        },
+        {
+          "id": "FT-650211879b84",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-007",
+            "utility_type": "sewer_line",
+            "department": "Utility Department",
+            "install_year": 1998
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2463, 16.71367047619986], [74.2478, 16.71367047619986]]}",
+          "centroid_lat": 16.71367047619986,
+          "centroid_lon": 74.24705,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209126"
+        },
+        {
+          "id": "FT-799a02d3e6ee",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-008",
+            "utility_type": "sewer_line",
+            "department": "Utility Department",
+            "install_year": 2003
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.24405, 16.713748454631418], [74.24555, 16.713748454631418]]}",
+          "centroid_lat": 16.713748454631418,
+          "centroid_lon": 74.2448,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209169"
+        },
+        {
+          "id": "FT-14dd850b1fe8",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-009",
+            "utility_type": "sewer_line",
+            "department": "Utility Department",
+            "install_year": 2023
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.25305, 16.712792131009515], [74.2538, 16.712792131009515]]}",
+          "centroid_lat": 16.712792131009515,
+          "centroid_lon": 74.253425,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209230"
+        },
+        {
+          "id": "FT-b6ace738ceaf",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-010",
+            "utility_type": "power_line",
+            "department": "Utility Department",
+            "install_year": 2010
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2523, 16.709167822093388], [74.25455000000001, 16.709167822093388]]}",
+          "centroid_lat": 16.709167822093388,
+          "centroid_lon": 74.25342500000001,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209282"
+        },
+        {
+          "id": "FT-00f7679d78af",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-011",
+            "utility_type": "power_line",
+            "department": "Utility Department",
+            "install_year": 2019
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2493, 16.709790462716217], [74.2508, 16.709790462716217]]}",
+          "centroid_lat": 16.709790462716217,
+          "centroid_lon": 74.25005,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209390"
+        },
+        {
+          "id": "FT-aa59952b08f3",
+          "dataset_id": "DS-d5b3055c3d69",
+          "canonical_type": "utility",
+          "raw_properties": {
+            "utility_id": "U-012",
+            "utility_type": "water_main",
+            "department": "Utility Department",
+            "install_year": 2014
+          },
+          "geometry_geojson": "{\"type\": \"LineString\", \"coordinates\": [[74.2508, 16.712150346146753], [74.25229999999999, 16.712150346146753]]}",
+          "centroid_lat": 16.712150346146753,
+          "centroid_lon": 74.25155,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.209443"
+        },
+        {
+          "id": "FT-1d8b4e8ff6db",
+          "dataset_id": "DS-d1f6556cbf8b",
+          "canonical_type": "parcel",
+          "raw_properties": {
+            "parcel_id": "P-0103",
+            "land_use": "Vacant",
+            "classification_source": "illustrative land-use inventory"
+          },
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25011, 16.70956], [74.25074, 16.70956], [74.25074, 16.71018157384986], [74.25011842615015, 16.710189999999997], [74.25011, 16.70956]]]}",
+          "centroid_lat": 16.70987220080127,
+          "centroid_lon": 74.25042639496769,
+          "area_sqm": 4619.154442883979,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.211252"
+        },
+        {
+          "id": "FT-62154da63fc9",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0103",
+            "linked_parcel_id": "P-0103",
+            "surveyor": "Team A",
+            "accuracy_m": 1.89
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2504575, 16.7098257]}",
+          "centroid_lat": 16.7098257,
+          "centroid_lon": 74.2504575,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445478"
+        },
+        {
+          "id": "FT-682c249abb0c",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0109",
+            "linked_parcel_id": "P-0109",
+            "surveyor": "Team A",
+            "accuracy_m": 0.88
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2518976, 16.7129233]}",
+          "centroid_lat": 16.7129233,
+          "centroid_lon": 74.2518976,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445539"
+        },
+        {
+          "id": "FT-6b35519269ef",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0113",
+            "linked_parcel_id": "P-0113",
+            "surveyor": "Team A",
+            "accuracy_m": 2.43
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2443708, 16.7082882]}",
+          "centroid_lat": 16.7082882,
+          "centroid_lon": 74.2443708,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445585"
+        },
+        {
+          "id": "FT-48d5b6bc1d06",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0115",
+            "linked_parcel_id": "P-0115",
+            "surveyor": "Team C",
+            "accuracy_m": 0.99
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2460076, 16.7061109]}",
+          "centroid_lat": 16.7061109,
+          "centroid_lon": 74.2460076,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445627"
+        },
+        {
+          "id": "FT-beba810d5c64",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0116",
+            "linked_parcel_id": "P-0116",
+            "surveyor": "Team C",
+            "accuracy_m": 1.01
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2541662, 16.7060829]}",
+          "centroid_lat": 16.7060829,
+          "centroid_lon": 74.2541662,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445668"
+        },
+        {
+          "id": "FT-4e8127baab54",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0117",
+            "linked_parcel_id": "P-0117",
+            "surveyor": "Team B",
+            "accuracy_m": 1.64
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2495984, 16.7083118]}",
+          "centroid_lat": 16.7083118,
+          "centroid_lon": 74.2495984,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445707"
+        },
+        {
+          "id": "FT-8fab836700e7",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0118",
+            "linked_parcel_id": "P-0118",
+            "surveyor": "Team C",
+            "accuracy_m": 1.61
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2474222, 16.7143054]}",
+          "centroid_lat": 16.7143054,
+          "centroid_lon": 74.2474222,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445748"
+        },
+        {
+          "id": "FT-3f5889e0b227",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0119",
+            "linked_parcel_id": "P-0119",
+            "surveyor": "Team A",
+            "accuracy_m": 0.81
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2482499, 16.7075913]}",
+          "centroid_lat": 16.7075913,
+          "centroid_lon": 74.2482499,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445785"
+        },
+        {
+          "id": "FT-7737b62ff7b7",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0129",
+            "linked_parcel_id": "P-0129",
+            "surveyor": "Team C",
+            "accuracy_m": 0.93
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2481825, 16.7069322]}",
+          "centroid_lat": 16.7069322,
+          "centroid_lon": 74.2481825,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445822"
+        },
+        {
+          "id": "FT-9a252ca8db87",
+          "dataset_id": "DS-492b2dadd73f",
+          "canonical_type": "gnss_point",
+          "raw_properties": {
+            "point_id": "G-0131",
+            "linked_parcel_id": "P-0131",
+            "surveyor": "Team A",
+            "accuracy_m": 1.51
+          },
+          "geometry_geojson": "{\"type\": \"Point\", \"coordinates\": [74.2452074, 16.7113194]}",
+          "centroid_lat": 16.7113194,
+          "centroid_lon": 74.2452074,
+          "area_sqm": null,
+          "is_valid_geometry": true,
+          "created_at": "2026-09-28T10:04:20.445860"
+        }
+      ],
+      "unified_parcels": [
+        {
+          "id": "UP-4f7715d48964",
+          "parcel_id": "P-0103",
+          "survey_number": "P-0103",
+          "owner_name": "Rekha Jadhav",
+          "area": 4619.154442883979,
+          "land_use": "Vacant",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25011, 16.70956], [74.25074, 16.70956], [74.25074, 16.71018157384986], [74.25011842615015, 16.710189999999997], [74.25011, 16.70956]]]}",
+          "building_count": 1,
+          "utility_count": 1,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 6,
+          "confidence_score": 68.9,
+          "spatial_confidence": 80.8,
+          "attribute_confidence": 73.6,
+          "geometry_confidence": 67.9,
+          "source_agreement": 100.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-92edcdb39ac9",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "land_use": {
+              "dataset_id": "DS-d1f6556cbf8b",
+              "dataset_name": "[Synthetic / Illustrative] Land Use Inventory - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-1d8b4e8ff6db",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "classification_source"
+              ],
+              "confidence": 92.2
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-62154da63fc9",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 84.2
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-12f81c8d60a0",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 62.5
+            },
+            "utility": {
+              "dataset_id": "DS-d5b3055c3d69",
+              "dataset_name": "[Synthetic / Illustrative] Utility Network (Water/Power/Sewer)",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-00f7679d78af",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "land_use",
+                "utility_id",
+                "utility_type",
+                "department",
+                "install_year"
+              ],
+              "confidence": 60.3
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-45ed8e050130",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 45.4
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.665994"
+        },
+        {
+          "id": "UP-1d970cb60b5d",
+          "parcel_id": "P-0109",
+          "survey_number": "P-0109",
+          "owner_name": "Anil More",
+          "area": 4428.446326788798,
+          "land_use": "Commercial",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25161000000001, 16.71256], [74.25224, 16.71256], [74.25224, 16.713155002773323], [74.25164499722669, 16.713189999999997], [74.25161000000001, 16.71256]]]}",
+          "building_count": 1,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 4,
+          "confidence_score": 60.5,
+          "spatial_confidence": 84.9,
+          "attribute_confidence": 91.3,
+          "geometry_confidence": 40.3,
+          "source_agreement": 80.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-b15f0660b66f",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-682c249abb0c",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 83.7
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-b08c39ecc187",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 52.1
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-1e9e986cb89c",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 45.8
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.667570"
+        },
+        {
+          "id": "UP-f59f7fbed154",
+          "parcel_id": "P-0113",
+          "survey_number": "P-0113",
+          "owner_name": "Priya Shinde",
+          "area": 4651.371345110155,
+          "land_use": "Commercial",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24411, 16.70806], [74.24474, 16.70806], [74.24474, 16.708685946414008], [74.244114053586, 16.708689999999997], [74.24411, 16.70806]]]}",
+          "building_count": 0,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 3,
+          "confidence_score": 67.6,
+          "spatial_confidence": 91.3,
+          "attribute_confidence": 91.7,
+          "geometry_confidence": 53.7,
+          "source_agreement": 60.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-d2164de9bdb9",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-6b35519269ef",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 82.2
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-8841eeae0c99",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 53.0
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.668680"
+        },
+        {
+          "id": "UP-9aaeb3410d68",
+          "parcel_id": "P-0115",
+          "survey_number": "P-0115",
+          "owner_name": "Deepak Kulkarni",
+          "area": 4628.779409450627,
+          "land_use": "Institutional",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24561000000001, 16.70581], [74.24624, 16.70581], [74.24624, 16.706432872045955], [74.24561712795406, 16.706439999999997], [74.24561000000001, 16.70581]]]}",
+          "building_count": 0,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 3,
+          "confidence_score": 87.4,
+          "spatial_confidence": 93.2,
+          "attribute_confidence": 91.7,
+          "geometry_confidence": 92.2,
+          "source_agreement": 60.0,
+          "validation_status": "PASSED",
+          "conflict_status": "MINOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-e98ad71a4086",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-38afd5a5904b",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 91.6
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-48d5b6bc1d06",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 83.2
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.669629"
+        },
+        {
+          "id": "UP-85e1c2115c5f",
+          "parcel_id": "P-0116",
+          "survey_number": "P-0116",
+          "owner_name": "Lata More",
+          "area": 4570.641810841091,
+          "land_use": "Mixed Use",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.25386, 16.70581], [74.25448999999999, 16.70581], [74.25448999999999, 16.706424909985483], [74.25387509001452, 16.706439999999997], [74.25386, 16.70581]]]}",
+          "building_count": 1,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 4,
+          "confidence_score": 64.9,
+          "spatial_confidence": 86.5,
+          "attribute_confidence": 91.3,
+          "geometry_confidence": 48.0,
+          "source_agreement": 80.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-20717cd06f8a",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-beba810d5c64",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 84.9
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-28a1bb3247cb",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 64.2
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-41f115c84a83",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 45.5
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.670737"
+        },
+        {
+          "id": "UP-e9b7b8fa1b37",
+          "parcel_id": "P-0117",
+          "survey_number": "P-0117",
+          "owner_name": "Vijay More",
+          "area": 4421.565039249555,
+          "land_use": "Institutional",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24936000000001, 16.70806], [74.24999, 16.70806], [74.24999, 16.70865400629986], [74.24939599370015, 16.708689999999997], [74.24936000000001, 16.70806]]]}",
+          "building_count": 0,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 3,
+          "confidence_score": 66.0,
+          "spatial_confidence": 91.7,
+          "attribute_confidence": 91.7,
+          "geometry_confidence": 50.3,
+          "source_agreement": 60.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-6d51c6488db7",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-4e8127baab54",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 82.5
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-f2bc5b3268d1",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 49.5
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.671661"
+        },
+        {
+          "id": "UP-8159951ddce9",
+          "parcel_id": "P-0118",
+          "survey_number": "P-0118",
+          "owner_name": "Prakash Chavan",
+          "area": 4575.475075471615,
+          "land_use": "Vacant",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24711, 16.71406], [74.24774, 16.71406], [74.24774, 16.71467560080747], [74.24712439919253, 16.714689999999997], [74.24711, 16.71406]]]}",
+          "building_count": 1,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 4,
+          "confidence_score": 63.6,
+          "spatial_confidence": 90.1,
+          "attribute_confidence": 91.3,
+          "geometry_confidence": 43.2,
+          "source_agreement": 80.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-a3db7cfe52b4",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-8fab836700e7",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 83.8
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-d244e25e8985",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 57.0
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-8eacc85260c3",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 49.9
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.672751"
+        },
+        {
+          "id": "UP-cc31f74520ee",
+          "parcel_id": "P-0119",
+          "survey_number": "P-0119",
+          "owner_name": "Prakash Bhosale",
+          "area": 4558.799271671883,
+          "land_use": "Vacant",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24786, 16.70731], [74.24848999999999, 16.70731], [74.24848999999999, 16.707923278239544], [74.24787672176046, 16.707939999999997], [74.24786, 16.70731]]]}",
+          "building_count": 1,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 4,
+          "confidence_score": 70.4,
+          "spatial_confidence": 90.2,
+          "attribute_confidence": 91.3,
+          "geometry_confidence": 57.0,
+          "source_agreement": 80.0,
+          "validation_status": "PASSED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-475fa7944a7c",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-3f5889e0b227",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 83.3
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-884faf2c4bd9",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 78.1
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-7660e5543058",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 49.9
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.673837"
+        },
+        {
+          "id": "UP-0fe88e430309",
+          "parcel_id": "P-0129",
+          "survey_number": "P-0129",
+          "owner_name": "Vijay Joshi",
+          "area": 4417.196683007459,
+          "land_use": "Institutional",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24786, 16.70656], [74.24848999999999, 16.70656], [74.24848999999999, 16.70715337723664], [74.24789662276336, 16.707189999999997], [74.24786, 16.70656]]]}",
+          "building_count": 1,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": false,
+          "source_count": 4,
+          "confidence_score": 60.1,
+          "spatial_confidence": 89.8,
+          "attribute_confidence": 82.5,
+          "geometry_confidence": 40.0,
+          "source_agreement": 80.0,
+          "validation_status": "FAILED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-7bc9f6921dcf",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-7737b62ff7b7",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 83.6
+            },
+            "municipal": {
+              "dataset_id": "DS-768713f245c3",
+              "dataset_name": "[Synthetic / Illustrative] Municipal Building Register",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-36fde4851d44",
+              "contributed_fields": [
+                "area",
+                "parcel_id",
+                "land_use",
+                "owner_name",
+                "property_id",
+                "plot_area",
+                "usage_type",
+                "linked_parcel"
+              ],
+              "confidence": 50.0
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-93ddc4e40bb5",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 46.7
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.674923"
+        },
+        {
+          "id": "UP-cac412b1a96a",
+          "parcel_id": "P-0131",
+          "survey_number": "P-0131",
+          "owner_name": "Shobha Bhosale",
+          "area": 4576.530067773586,
+          "land_use": "Commercial",
+          "geometry_geojson": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24486, 16.71106], [74.24548999999999, 16.71106], [74.24548999999999, 16.711675735824016], [74.24487426417598, 16.711689999999997], [74.24486, 16.71106]]]}",
+          "building_count": 0,
+          "utility_count": 0,
+          "gnss_verified": true,
+          "ground_truth_verified": true,
+          "source_count": 4,
+          "confidence_score": 71.6,
+          "spatial_confidence": 95.6,
+          "attribute_confidence": 73.1,
+          "geometry_confidence": 70.0,
+          "source_agreement": 80.0,
+          "validation_status": "PASSED",
+          "conflict_status": "MAJOR",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-9864eb238e93",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            },
+            "gnss": {
+              "dataset_id": "DS-492b2dadd73f",
+              "dataset_name": "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-9a252ca8db87",
+              "contributed_fields": [
+                "parcel_id",
+                "area",
+                "point_id",
+                "linked_parcel_id",
+                "surveyor",
+                "accuracy_m"
+              ],
+              "confidence": 84.1
+            },
+            "ground_truth": {
+              "dataset_id": "DS-7de98a9649ee",
+              "dataset_name": "[Synthetic / Illustrative] Field Verification Points",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-1db694368827",
+              "contributed_fields": [
+                "owner_name",
+                "survey_number",
+                "parcel_id",
+                "land_use",
+                "gt_id",
+                "field_verified",
+                "verification_date",
+                "notes"
+              ],
+              "confidence": 76.7
+            },
+            "revenue": {
+              "dataset_id": "DS-804e43076809",
+              "dataset_name": "[Synthetic / Illustrative] Revenue Land Records - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-89e89947b5af",
+              "contributed_fields": [
+                "land_use",
+                "parcel_id",
+                "area",
+                "owner_name",
+                "survey_no",
+                "landholder",
+                "classification",
+                "khasra_no"
+              ],
+              "confidence": 54.1
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.676007"
+        },
+        {
+          "id": "UP-b5dfb5435a13",
+          "parcel_id": "P-9001",
+          "survey_number": "P-9001",
+          "owner_name": "Bowtie Test Parcel",
+          "area": 3317.3261889185287,
+          "land_use": "Vacant",
+          "geometry_geojson": "{\"type\": \"MultiPolygon\", \"coordinates\": [[[[74.24555000000001, 16.708], [74.245925, 16.707624999999997], [74.24555000000001, 16.70725], [74.24555000000001, 16.708]]], [[[74.2463, 16.70725], [74.245925, 16.707624999999997], [74.2463, 16.708], [74.2463, 16.70725]]]]}",
+          "building_count": 0,
+          "utility_count": 0,
+          "gnss_verified": false,
+          "ground_truth_verified": false,
+          "source_count": 1,
+          "confidence_score": 20.0,
+          "spatial_confidence": 0.0,
+          "attribute_confidence": 0.0,
+          "geometry_confidence": 0.0,
+          "source_agreement": 20.0,
+          "validation_status": "FAILED",
+          "conflict_status": "NONE",
+          "lineage": {
+            "cadastral": {
+              "dataset_id": "DS-45cfa362df95",
+              "dataset_name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",
+              "provenance": "synthetic_demo",
+              "feature_id": "FT-63de76a009ff",
+              "contributed_fields": [
+                "area",
+                "land_use",
+                "owner_name",
+                "ward",
+                "parcel_id",
+                "owner",
+                "area_sq_m"
+              ],
+              "confidence": 100.0
+            }
+          },
+          "last_updated": "2026-09-28T10:04:20.676486"
+        }
+      ],
+      "matches": [
+        {
+          "id": "MT-8104c1281f4e",
+          "parcel_unified_id": "UP-4f7715d48964",
+          "feature_id": "FT-1d8b4e8ff6db",
+          "dataset_id": "DS-d1f6556cbf8b",
+          "matched_group_id": "GRP-0001",
+          "spatial_proximity": 100.0,
+          "geometry_overlap": 100.0,
+          "area_similarity": 100.0,
+          "attribute_similarity": 60.8,
+          "overall_confidence": 92.2,
+          "matched_at": "2026-09-28T10:04:20.537359"
+        },
+        {
+          "id": "MT-ded21a888647",
+          "parcel_unified_id": "UP-4f7715d48964",
+          "feature_id": "FT-62154da63fc9",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0001",
+          "spatial_proximity": 91.8,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 84.2,
+          "matched_at": "2026-09-28T10:04:20.537361"
+        },
+        {
+          "id": "MT-65a32d2cca30",
+          "parcel_unified_id": "UP-4f7715d48964",
+          "feature_id": "FT-12f81c8d60a0",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0001",
+          "spatial_proximity": 97.6,
+          "geometry_overlap": 26.4,
+          "area_similarity": 26.4,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 62.5,
+          "matched_at": "2026-09-28T10:04:20.537362"
+        },
+        {
+          "id": "MT-86b55e08fffc",
+          "parcel_unified_id": "UP-4f7715d48964",
+          "feature_id": "FT-00f7679d78af",
+          "dataset_id": "DS-d5b3055c3d69",
+          "matched_group_id": "GRP-0001",
+          "spatial_proximity": 45.2,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 33.5,
+          "overall_confidence": 60.3,
+          "matched_at": "2026-09-28T10:04:20.537362"
+        },
+        {
+          "id": "MT-f9f4e40c9b82",
+          "parcel_unified_id": "UP-4f7715d48964",
+          "feature_id": "FT-45ed8e050130",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0001",
+          "spatial_proximity": 69.4,
+          "geometry_overlap": 12.9,
+          "area_similarity": 12.9,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 45.4,
+          "matched_at": "2026-09-28T10:04:20.537363"
+        },
+        {
+          "id": "MT-ec12d6e7f2be",
+          "parcel_unified_id": "UP-1d970cb60b5d",
+          "feature_id": "FT-682c249abb0c",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0002",
+          "spatial_proximity": 90.0,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 83.7,
+          "matched_at": "2026-09-28T10:04:20.537364"
+        },
+        {
+          "id": "MT-10e3fa30bc38",
+          "parcel_unified_id": "UP-1d970cb60b5d",
+          "feature_id": "FT-b08c39ecc187",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0002",
+          "spatial_proximity": 94.9,
+          "geometry_overlap": 7.3,
+          "area_similarity": 7.3,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 52.1,
+          "matched_at": "2026-09-28T10:04:20.537364"
+        },
+        {
+          "id": "MT-0d00b6fbf629",
+          "parcel_unified_id": "UP-1d970cb60b5d",
+          "feature_id": "FT-1e9e986cb89c",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0002",
+          "spatial_proximity": 69.8,
+          "geometry_overlap": 13.5,
+          "area_similarity": 13.5,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 45.8,
+          "matched_at": "2026-09-28T10:04:20.537365"
+        },
+        {
+          "id": "MT-e29ff4873745",
+          "parcel_unified_id": "UP-f59f7fbed154",
+          "feature_id": "FT-6b35519269ef",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0003",
+          "spatial_proximity": 85.1,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 82.2,
+          "matched_at": "2026-09-28T10:04:20.537365"
+        },
+        {
+          "id": "MT-2a3d166a47d6",
+          "parcel_unified_id": "UP-f59f7fbed154",
+          "feature_id": "FT-8841eeae0c99",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0003",
+          "spatial_proximity": 97.5,
+          "geometry_overlap": 7.4,
+          "area_similarity": 7.4,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 53.0,
+          "matched_at": "2026-09-28T10:04:20.537366"
+        },
+        {
+          "id": "MT-7ecf68e60d28",
+          "parcel_unified_id": "UP-9aaeb3410d68",
+          "feature_id": "FT-38afd5a5904b",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0004",
+          "spatial_proximity": 98.2,
+          "geometry_overlap": 84.3,
+          "area_similarity": 84.3,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 91.6,
+          "matched_at": "2026-09-28T10:04:20.537367"
+        },
+        {
+          "id": "MT-78c4de51e839",
+          "parcel_unified_id": "UP-9aaeb3410d68",
+          "feature_id": "FT-48d5b6bc1d06",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0004",
+          "spatial_proximity": 88.3,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 83.2,
+          "matched_at": "2026-09-28T10:04:20.537367"
+        },
+        {
+          "id": "MT-7d37c9eeebf9",
+          "parcel_unified_id": "UP-85e1c2115c5f",
+          "feature_id": "FT-beba810d5c64",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0005",
+          "spatial_proximity": 94.3,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 84.9,
+          "matched_at": "2026-09-28T10:04:20.537368"
+        },
+        {
+          "id": "MT-d927c51a36fd",
+          "parcel_unified_id": "UP-85e1c2115c5f",
+          "feature_id": "FT-28a1bb3247cb",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0005",
+          "spatial_proximity": 95.7,
+          "geometry_overlap": 31.0,
+          "area_similarity": 31.0,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 64.2,
+          "matched_at": "2026-09-28T10:04:20.537368"
+        },
+        {
+          "id": "MT-89d1b2acbc68",
+          "parcel_unified_id": "UP-85e1c2115c5f",
+          "feature_id": "FT-41f115c84a83",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0005",
+          "spatial_proximity": 69.5,
+          "geometry_overlap": 13.1,
+          "area_similarity": 13.1,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 45.5,
+          "matched_at": "2026-09-28T10:04:20.537369"
+        },
+        {
+          "id": "MT-312be6241e15",
+          "parcel_unified_id": "UP-e9b7b8fa1b37",
+          "feature_id": "FT-4e8127baab54",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0006",
+          "spatial_proximity": 86.0,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 82.5,
+          "matched_at": "2026-09-28T10:04:20.537369"
+        },
+        {
+          "id": "MT-f8471a8d22ae",
+          "parcel_unified_id": "UP-e9b7b8fa1b37",
+          "feature_id": "FT-f2bc5b3268d1",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0006",
+          "spatial_proximity": 97.4,
+          "geometry_overlap": 0.6,
+          "area_similarity": 0.6,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 49.5,
+          "matched_at": "2026-09-28T10:04:20.537370"
+        },
+        {
+          "id": "MT-8ee1ba00564b",
+          "parcel_unified_id": "UP-8159951ddce9",
+          "feature_id": "FT-8fab836700e7",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0007",
+          "spatial_proximity": 90.4,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 83.8,
+          "matched_at": "2026-09-28T10:04:20.537371"
+        },
+        {
+          "id": "MT-cee57d2f3766",
+          "parcel_unified_id": "UP-8159951ddce9",
+          "feature_id": "FT-d244e25e8985",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0007",
+          "spatial_proximity": 95.5,
+          "geometry_overlap": 16.6,
+          "area_similarity": 16.6,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 57.0,
+          "matched_at": "2026-09-28T10:04:20.537371"
+        },
+        {
+          "id": "MT-13ec42250b8e",
+          "parcel_unified_id": "UP-8159951ddce9",
+          "feature_id": "FT-8eacc85260c3",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0007",
+          "spatial_proximity": 84.3,
+          "geometry_overlap": 13.0,
+          "area_similarity": 13.0,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 49.9,
+          "matched_at": "2026-09-28T10:04:20.537372"
+        },
+        {
+          "id": "MT-ebbcf404f662",
+          "parcel_unified_id": "UP-cc31f74520ee",
+          "feature_id": "FT-3f5889e0b227",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0008",
+          "spatial_proximity": 88.9,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 83.3,
+          "matched_at": "2026-09-28T10:04:20.537372"
+        },
+        {
+          "id": "MT-2dda349d899e",
+          "parcel_unified_id": "UP-cc31f74520ee",
+          "feature_id": "FT-884faf2c4bd9",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0008",
+          "spatial_proximity": 97.3,
+          "geometry_overlap": 57.9,
+          "area_similarity": 57.9,
+          "attribute_similarity": 100.0,
+          "overall_confidence": 78.1,
+          "matched_at": "2026-09-28T10:04:20.537373"
+        },
+        {
+          "id": "MT-7f10a4bc5165",
+          "parcel_unified_id": "UP-cc31f74520ee",
+          "feature_id": "FT-7660e5543058",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0008",
+          "spatial_proximity": 84.3,
+          "geometry_overlap": 13.1,
+          "area_similarity": 13.1,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 49.9,
+          "matched_at": "2026-09-28T10:04:20.537373"
+        },
+        {
+          "id": "MT-5f0089cd905e",
+          "parcel_unified_id": "UP-0fe88e430309",
+          "feature_id": "FT-7737b62ff7b7",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0009",
+          "spatial_proximity": 89.7,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 83.6,
+          "matched_at": "2026-09-28T10:04:20.537374"
+        },
+        {
+          "id": "MT-0acea18a4471",
+          "parcel_unified_id": "UP-0fe88e430309",
+          "feature_id": "FT-36fde4851d44",
+          "dataset_id": "DS-768713f245c3",
+          "matched_group_id": "GRP-0009",
+          "spatial_proximity": 83.8,
+          "geometry_overlap": 13.5,
+          "area_similarity": 13.5,
+          "attribute_similarity": 90.5,
+          "overall_confidence": 50.0,
+          "matched_at": "2026-09-28T10:04:20.537374"
+        },
+        {
+          "id": "MT-8142ece4583d",
+          "parcel_unified_id": "UP-0fe88e430309",
+          "feature_id": "FT-93ddc4e40bb5",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0009",
+          "spatial_proximity": 95.9,
+          "geometry_overlap": 6.4,
+          "area_similarity": 6.4,
+          "attribute_similarity": 73.7,
+          "overall_confidence": 46.7,
+          "matched_at": "2026-09-28T10:04:20.537375"
+        },
+        {
+          "id": "MT-2a6e31a7d8ab",
+          "parcel_unified_id": "UP-cac412b1a96a",
+          "feature_id": "FT-9a252ca8db87",
+          "dataset_id": "DS-492b2dadd73f",
+          "matched_group_id": "GRP-0010",
+          "spatial_proximity": 91.3,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 83.3,
+          "overall_confidence": 84.1,
+          "matched_at": "2026-09-28T10:04:20.537375"
+        },
+        {
+          "id": "MT-b573d7c36371",
+          "parcel_unified_id": "UP-cac412b1a96a",
+          "feature_id": "FT-1db694368827",
+          "dataset_id": "DS-7de98a9649ee",
+          "matched_group_id": "GRP-0010",
+          "spatial_proximity": 97.6,
+          "geometry_overlap": 100.0,
+          "area_similarity": 50.0,
+          "attribute_similarity": 37.0,
+          "overall_confidence": 76.7,
+          "matched_at": "2026-09-28T10:04:20.537376"
+        },
+        {
+          "id": "MT-22b3e6a552c1",
+          "parcel_unified_id": "UP-cac412b1a96a",
+          "feature_id": "FT-89e89947b5af",
+          "dataset_id": "DS-804e43076809",
+          "matched_group_id": "GRP-0010",
+          "spatial_proximity": 97.9,
+          "geometry_overlap": 9.9,
+          "area_similarity": 9.9,
+          "attribute_similarity": 98.9,
+          "overall_confidence": 54.1,
+          "matched_at": "2026-09-28T10:04:20.537377"
+        }
+      ],
+      "conflicts": [
+        {
+          "id": "CF-d6fad384873d",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-45ed8e050130",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-45ed8e050130 crosses parcel FT-92edcdb39ac9 boundary (overlap ratio 12.9%)",
+          "confidence": 87.1,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-4f7715d48964",
+          "created_at": "2026-09-28T10:04:20.540502",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-691f100fb807",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-1e9e986cb89c",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-1e9e986cb89c crosses parcel FT-b15f0660b66f boundary (overlap ratio 13.5%)",
+          "confidence": 86.5,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-1d970cb60b5d",
+          "created_at": "2026-09-28T10:04:20.541204",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-7704fc04a746",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-41f115c84a83",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-804e43076809",
+          "description": "Building FT-41f115c84a83 crosses parcel FT-28a1bb3247cb boundary (overlap ratio 16.0%)",
+          "confidence": 84.0,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-85e1c2115c5f",
+          "created_at": "2026-09-28T10:04:20.541824",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-542498735ca6",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-9f5220c2d147",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-804e43076809",
+          "description": "Building FT-9f5220c2d147 crosses parcel FT-d244e25e8985 boundary (overlap ratio 8.9%)",
+          "confidence": 91.1,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": null,
+          "created_at": "2026-09-28T10:04:20.542438",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-642def1b1df1",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-8eacc85260c3",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-804e43076809",
+          "description": "Building FT-8eacc85260c3 crosses parcel FT-d244e25e8985 boundary (overlap ratio 26.5%)",
+          "confidence": 73.5,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-8159951ddce9",
+          "created_at": "2026-09-28T10:04:20.543053",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-af95c619d56a",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-ee34f39cbe66",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-804e43076809",
+          "description": "Building FT-ee34f39cbe66 crosses parcel FT-d244e25e8985 boundary (overlap ratio 5.0%)",
+          "confidence": 95.0,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": null,
+          "created_at": "2026-09-28T10:04:20.543651",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-14ae90135faa",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-74d58b84d599",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-74d58b84d599 crosses parcel FT-475fa7944a7c boundary (overlap ratio 13.1%)",
+          "confidence": 86.9,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": null,
+          "created_at": "2026-09-28T10:04:20.544240",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-f587d2f9182d",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-7660e5543058",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-7660e5543058 crosses parcel FT-475fa7944a7c boundary (overlap ratio 13.1%)",
+          "confidence": 86.9,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-cc31f74520ee",
+          "created_at": "2026-09-28T10:04:20.544822",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-71c625db1297",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-938bb0c99fdb",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-938bb0c99fdb crosses parcel FT-7bc9f6921dcf boundary (overlap ratio 13.5%)",
+          "confidence": 86.5,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": null,
+          "created_at": "2026-09-28T10:04:20.545407",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-c6b6f1ec5fec",
+          "conflict_type": "building_boundary_crossing",
+          "severity": "MODERATE",
+          "feature_ref": "FT-36fde4851d44",
+          "source_a": "DS-768713f245c3",
+          "source_b": "DS-45cfa362df95",
+          "description": "Building FT-36fde4851d44 crosses parcel FT-7bc9f6921dcf boundary (overlap ratio 13.5%)",
+          "confidence": 86.5,
+          "recommended_action": "Verify building footprint against surveyed parcel boundary",
+          "status": "Open",
+          "parcel_id": "UP-0fe88e430309",
+          "created_at": "2026-09-28T10:04:20.545977",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-d25246f26496",
+          "conflict_type": "utility_crossing",
+          "severity": "MINOR",
+          "feature_ref": "FT-00f7679d78af",
+          "source_a": "DS-d5b3055c3d69",
+          "source_b": "DS-45cfa362df95",
+          "description": "Utility line FT-00f7679d78af crosses parcel FT-92edcdb39ac9 boundary",
+          "confidence": 70.0,
+          "recommended_action": "Coordinate with Utility Department for easement verification",
+          "status": "Open",
+          "parcel_id": "UP-4f7715d48964",
+          "created_at": "2026-09-28T10:04:20.546104",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-8ac6fcf9a4f8",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-1d8b4e8ff6db",
+          "source_a": "DS-d1f6556cbf8b",
+          "source_b": "DS-768713f245c3",
+          "description": "Area mismatch of 87.1% between sources for group GRP-0001 (597.1 m² vs 4619.2 m²)",
+          "confidence": 12.9,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-4f7715d48964",
+          "created_at": "2026-09-28T10:04:20.547259",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-0445ae8403d5",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-b15f0660b66f",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 92.7% between sources for group GRP-0002 (324.1 m² vs 4428.4 m²)",
+          "confidence": 7.3,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-1d970cb60b5d",
+          "created_at": "2026-09-28T10:04:20.547542",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-9117b95712ce",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-d2164de9bdb9",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 92.6% between sources for group GRP-0003 (344.7 m² vs 4651.4 m²)",
+          "confidence": 7.4,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-f59f7fbed154",
+          "created_at": "2026-09-28T10:04:20.547790",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-8fb533ae80d1",
+          "conflict_type": "area_mismatch",
+          "severity": "MODERATE",
+          "feature_ref": "FT-e98ad71a4086",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 15.7% between sources for group GRP-0004 (3901.5 m² vs 4628.8 m²)",
+          "confidence": 84.3,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-9aaeb3410d68",
+          "created_at": "2026-09-28T10:04:20.548005",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-f0c899b7667b",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-20717cd06f8a",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-768713f245c3",
+          "description": "Area mismatch of 86.9% between sources for group GRP-0005 (597.1 m² vs 4570.6 m²)",
+          "confidence": 13.1,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-85e1c2115c5f",
+          "created_at": "2026-09-28T10:04:20.548232",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-1b2f003d777f",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-6d51c6488db7",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 99.4% between sources for group GRP-0006 (25.5 m² vs 4421.6 m²)",
+          "confidence": 0.6,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-e9b7b8fa1b37",
+          "created_at": "2026-09-28T10:04:20.548432",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-9068283612ac",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-a3db7cfe52b4",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-768713f245c3",
+          "description": "Area mismatch of 87.0% between sources for group GRP-0007 (597.1 m² vs 4575.5 m²)",
+          "confidence": 13.0,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-8159951ddce9",
+          "created_at": "2026-09-28T10:04:20.548650",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-87c67933ef62",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-475fa7944a7c",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-768713f245c3",
+          "description": "Area mismatch of 86.9% between sources for group GRP-0008 (597.1 m² vs 4558.8 m²)",
+          "confidence": 13.1,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-cc31f74520ee",
+          "created_at": "2026-09-28T10:04:20.548855",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-ce2089a77e85",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-7bc9f6921dcf",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 93.6% between sources for group GRP-0009 (280.6 m² vs 4417.2 m²)",
+          "confidence": 6.4,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-0fe88e430309",
+          "created_at": "2026-09-28T10:04:20.549068",
+          "resolved_at": null
+        },
+        {
+          "id": "CF-db83448709ac",
+          "conflict_type": "area_mismatch",
+          "severity": "MAJOR",
+          "feature_ref": "FT-9864eb238e93",
+          "source_a": "DS-45cfa362df95",
+          "source_b": "DS-804e43076809",
+          "description": "Area mismatch of 90.1% between sources for group GRP-0010 (452.5 m² vs 4576.5 m²)",
+          "confidence": 9.9,
+          "recommended_action": "Reconcile recorded area against ground survey",
+          "status": "Open",
+          "parcel_id": "UP-cac412b1a96a",
+          "created_at": "2026-09-28T10:04:20.549323",
+          "resolved_at": null
+        }
+      ],
+      "attribute_mappings": [
+        {
+          "id": "AM-75172af98e45",
+          "dataset_id": "DS-45cfa362df95",
+          "source_field": "area_sq_m",
+          "canonical_field": "area",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-2fdde4126858",
+          "dataset_id": "DS-45cfa362df95",
+          "source_field": "land_use",
+          "canonical_field": "land_use",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-822725ca3bdc",
+          "dataset_id": "DS-45cfa362df95",
+          "source_field": "owner",
+          "canonical_field": "owner_name",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-ef37b0acf289",
+          "dataset_id": "DS-45cfa362df95",
+          "source_field": "ward",
+          "canonical_field": "ward",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-1d3d239ad12f",
+          "dataset_id": "DS-45cfa362df95",
+          "source_field": "parcel_id",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-420319ee05e8",
+          "dataset_id": "DS-804e43076809",
+          "source_field": "classification",
+          "canonical_field": "land_use",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-95c8e09de9a1",
+          "dataset_id": "DS-804e43076809",
+          "source_field": "khasra_no",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-76d79f689e01",
+          "dataset_id": "DS-804e43076809",
+          "source_field": "area",
+          "canonical_field": "area",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-c60ff6c7613a",
+          "dataset_id": "DS-804e43076809",
+          "source_field": "survey_no",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-1a1c3a318b14",
+          "dataset_id": "DS-804e43076809",
+          "source_field": "landholder",
+          "canonical_field": "owner_name",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-8e147621056a",
+          "dataset_id": "DS-768713f245c3",
+          "source_field": "linked_parcel",
+          "canonical_field": "area",
+          "confidence": 58.6,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-43917aed7113",
+          "dataset_id": "DS-768713f245c3",
+          "source_field": "property_id",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-134f9ccddec0",
+          "dataset_id": "DS-768713f245c3",
+          "source_field": "plot_area",
+          "canonical_field": "area",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-694a23ddc748",
+          "dataset_id": "DS-768713f245c3",
+          "source_field": "usage_type",
+          "canonical_field": "land_use",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-2885111d6755",
+          "dataset_id": "DS-768713f245c3",
+          "source_field": "owner_name",
+          "canonical_field": "owner_name",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-9002efe4dea3",
+          "dataset_id": "DS-7de98a9649ee",
+          "source_field": "field_verified",
+          "canonical_field": "owner_name",
+          "confidence": 43.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-4c88cbeba148",
+          "dataset_id": "DS-7de98a9649ee",
+          "source_field": "notes",
+          "canonical_field": "survey_number",
+          "confidence": 47.4,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-728022ddac1e",
+          "dataset_id": "DS-7de98a9649ee",
+          "source_field": "gt_id",
+          "canonical_field": "parcel_id",
+          "confidence": 57.5,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-9e42037cbe1b",
+          "dataset_id": "DS-7de98a9649ee",
+          "source_field": "verification_date",
+          "canonical_field": "land_use",
+          "confidence": 61.1,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-0216e50224d2",
+          "dataset_id": "DS-7de98a9649ee",
+          "source_field": "parcel_id",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-18c72269aee6",
+          "dataset_id": "DS-d5b3055c3d69",
+          "source_field": "utility_id",
+          "canonical_field": "parcel_id",
+          "confidence": 50.6,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-66516310d381",
+          "dataset_id": "DS-d5b3055c3d69",
+          "source_field": "department",
+          "canonical_field": "area",
+          "confidence": 57.5,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-1f0fc4d73037",
+          "dataset_id": "DS-d5b3055c3d69",
+          "source_field": "install_year",
+          "canonical_field": "area",
+          "confidence": 51.5,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-8a5feda7298e",
+          "dataset_id": "DS-d5b3055c3d69",
+          "source_field": "utility_type",
+          "canonical_field": "land_use",
+          "confidence": 60.1,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-809b417caea1",
+          "dataset_id": "DS-d1f6556cbf8b",
+          "source_field": "land_use",
+          "canonical_field": "land_use",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-3b3b29b10173",
+          "dataset_id": "DS-d1f6556cbf8b",
+          "source_field": "classification_source",
+          "canonical_field": "land_use",
+          "confidence": 88.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-c5b511679f8c",
+          "dataset_id": "DS-d1f6556cbf8b",
+          "source_field": "parcel_id",
+          "canonical_field": "parcel_id",
+          "confidence": 100.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-3f0f7c08c94b",
+          "dataset_id": "DS-492b2dadd73f",
+          "source_field": "linked_parcel_id",
+          "canonical_field": "parcel_id",
+          "confidence": 88.0,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-ee407da3043e",
+          "dataset_id": "DS-492b2dadd73f",
+          "source_field": "surveyor",
+          "canonical_field": "parcel_id",
+          "confidence": 85.4,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-e3b534c7f1e1",
+          "dataset_id": "DS-492b2dadd73f",
+          "source_field": "point_id",
+          "canonical_field": "parcel_id",
+          "confidence": 66.2,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        },
+        {
+          "id": "AM-147904386372",
+          "dataset_id": "DS-492b2dadd73f",
+          "source_field": "accuracy_m",
+          "canonical_field": "area",
+          "confidence": 63.6,
+          "method": "fuzzy_synonym",
+          "manual_override": false
+        }
+      ],
+      "validation_results": [
+        {
+          "id": "VR-e12af76efa18",
+          "feature_id": "FT-63de76a009ff",
+          "dataset_id": "DS-45cfa362df95",
+          "is_valid": false,
+          "issue_type": "self_intersection",
+          "original_geometry": "{\"type\": \"Polygon\", \"coordinates\": [[[74.24555000000001, 16.70725], [74.2463, 16.708], [74.2463, 16.70725], [74.24555000000001, 16.708], [74.24555000000001, 16.70725]]]}",
+          "corrected_geometry": "{\"type\": \"MultiPolygon\", \"coordinates\": [[[[74.24555000000001, 16.708], [74.245925, 16.707624999999997], [74.24555000000001, 16.70725], [74.24555000000001, 16.708]]], [[[74.2463, 16.70725], [74.245925, 16.707624999999997], [74.2463, 16.708], [74.2463, 16.70725]]]]}",
+          "corrected": true
+        },
+        {
+          "id": "VR-e258c3454a2f",
+          "feature_id": "FT-ee34f39cbe66",
+          "dataset_id": "DS-768713f245c3",
+          "is_valid": false,
+          "issue_type": "overlap",
+          "original_geometry": null,
+          "corrected_geometry": null,
+          "corrected": false
+        }
+      ],
+      "harmonization_jobs": [
+        {
+          "id": "JOB-1790589860-49f9",
+          "status": "completed",
+          "stages": [
+            {
+              "name": "Ingestion",
+              "status": "completed",
+              "processed": 7,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "7 datasets available",
+              "timestamp": "2026-09-28T10:04:20.448531"
+            },
+            {
+              "name": "CRS Normalization",
+              "status": "completed",
+              "processed": 55,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "Source CRS(s) detected: EPSG:32643, EPSG:4326 -> all geometries normalized to EPSG:4326",
+              "timestamp": "2026-09-28T10:04:20.450702"
+            },
+            {
+              "name": "Schema Mapping",
+              "status": "completed",
+              "processed": 31,
+              "warnings": 4,
+              "errors": 0,
+              "detail": "31 fields mapped, 4 flagged for review",
+              "timestamp": "2026-09-28T10:04:20.465060"
+            },
+            {
+              "name": "Topology Validation",
+              "status": "completed",
+              "processed": 55,
+              "warnings": 2,
+              "errors": 0,
+              "detail": "2 issues found, 1 auto-corrected",
+              "timestamp": "2026-09-28T10:04:20.486257"
+            },
+            {
+              "name": "Spatial Matching",
+              "status": "completed",
+              "processed": 29,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "11 feature groups formed (11 cadastral-anchored, 0 fallback-anchored). Local E5 embeddings are disabled; text matching used fuzzy similarity.",
+              "timestamp": "2026-09-28T10:04:20.538104"
+            },
+            {
+              "name": "Conflict Detection",
+              "status": "completed",
+              "processed": 55,
+              "warnings": 21,
+              "errors": 0,
+              "detail": "21 conflicts identified",
+              "timestamp": "2026-09-28T10:04:20.662002"
+            },
+            {
+              "name": "Conflict Resolution",
+              "status": "completed",
+              "processed": 21,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "Conflicts queued for human review in Conflict Resolution workspace",
+              "timestamp": "2026-09-28T10:04:20.662679"
+            },
+            {
+              "name": "Confidence Scoring",
+              "status": "completed",
+              "processed": 11,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "Spatial, attribute, geometry and source-agreement confidence computed per parcel",
+              "timestamp": "2026-09-28T10:04:20.679219"
+            },
+            {
+              "name": "Unified Land Record",
+              "status": "completed",
+              "processed": 11,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "11 unified parcel records generated",
+              "timestamp": "2026-09-28T10:04:20.679848"
+            },
+            {
+              "name": "Change Detection",
+              "status": "disabled",
+              "processed": 0,
+              "warnings": 0,
+              "errors": 0,
+              "detail": "Snapshot-based change detection is disabled because this hosted free demo has no durable local disk.",
+              "timestamp": "2026-09-28T10:04:20.682738"
+            }
+          ],
+          "total_processed": 11,
+          "started_at": "2026-09-28T10:04:20.446878",
+          "completed_at": "2026-09-28T10:04:20.683345"
+        }
+      ]
+    }
+  },
+  "sha256": "08ed1a306500b259d32f62b68a2bc401dac4238120872f23720ea6738f80d3a9"
+}

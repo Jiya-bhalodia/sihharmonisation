@@ -133,16 +133,6 @@ def _hosted_demo_state_is_ready(db):
            for dataset in datasets):
         return False
 
-    latest_job = db.query(HarmonizationJob).order_by(HarmonizationJob.started_at.desc()).first()
-    if latest_job is None or latest_job.status != "completed":
-        return False
-    stages = {stage.get("name"): stage.get("status") for stage in (latest_job.stages or [])
-              if isinstance(stage, dict)}
-    if any(stages.get(stage) != "completed" for stage in HOSTED_DEMO_REQUIRED_STAGES):
-        return False
-    if stages.get("Change Detection") != "disabled":
-        return False
-
     # Confirm persisted outputs from the completed matching, topology,
     # attribute-mapping, confidence, and provenance stages.
     if db.query(MatchRecord.id).filter(MatchRecord.dataset_id.in_(dataset_ids)).first() is None:
@@ -152,7 +142,18 @@ def _hosted_demo_state_is_ready(db):
     if db.query(ValidationResult.id).filter(ValidationResult.dataset_id.in_(dataset_ids)).first() is None:
         return False
     unified_records = db.query(UnifiedParcel).all()
-    if not unified_records or latest_job.total_processed != len(unified_records):
+    if not unified_records:
+        return False
+    ready_job_found = False
+    for job in db.query(HarmonizationJob).filter(HarmonizationJob.status == "completed").order_by(HarmonizationJob.started_at.desc()).all():
+        stages = {stage.get("name"): stage.get("status") for stage in (job.stages or [])
+                  if isinstance(stage, dict)}
+        if (job.total_processed == len(unified_records)
+                and all(stages.get(stage) == "completed" for stage in HOSTED_DEMO_REQUIRED_STAGES)
+                and stages.get("Change Detection") == "disabled"):
+            ready_job_found = True
+            break
+    if not ready_job_found:
         return False
     if not any(
         record.confidence_score and isinstance(record.lineage, dict)
@@ -173,16 +174,20 @@ def seed(reset=False):
     init_db()
 
     db = SessionLocal()
-    advisory_lock = False
     try:
-        # Serialize startup across multiple Render instances. PostgreSQL
-        # session advisory locks survive the commits performed by ingestion.
+        # Serialize startup across Render instances. The hosted snapshot is
+        # imported in this transaction, so the transaction-level advisory
+        # lock is held until the snapshot commits or rolls back.
         if settings.FREE_DEMO_MODE and db.bind.dialect.name == "postgresql":
-            db.execute(text("SELECT pg_advisory_lock(26013, 2026)"))
-            advisory_lock = True
+            db.execute(text("SELECT pg_advisory_xact_lock(26013, 2026)"))
         if not reset and settings.FREE_DEMO_MODE and _hosted_demo_state_is_ready(db):
             logger.info("Hosted demo prepared state verified; startup seed skipped")
             return False
+        if settings.FREE_DEMO_MODE:
+            from app.services.hosted_demo_snapshot import load_snapshot_transactionally
+            counts = load_snapshot_transactionally(db, _hosted_demo_state_is_ready)
+            logger.info("Hosted demo snapshot loaded transactionally; record_counts=%s", counts)
+            return True
         if not reset and not settings.FREE_DEMO_MODE and db.query(Dataset).count():
             logger.info("Sample seed skipped: datasets already exist; existing database was left unchanged")
             return False
@@ -250,11 +255,6 @@ def seed(reset=False):
         logger.exception("Sample data seed failed")
         raise
     finally:
-        if advisory_lock:
-            try:
-                db.execute(text("SELECT pg_advisory_unlock(26013, 2026)"))
-            except Exception:
-                pass
         db.close()
 
 
