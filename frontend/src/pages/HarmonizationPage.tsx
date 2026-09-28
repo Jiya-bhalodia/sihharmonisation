@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Play, CheckCircle2, AlertCircle, Loader2, ArrowRight } from 'lucide-react'
 import Topbar from '../components/Topbar'
 import { api } from '../services/api'
@@ -23,11 +23,13 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
   const { data: conflicts } = useApi(() => api.getConflicts())
   const { data: topology } = useApi(() => api.getTopologyResults())
   const { data: parcels } = useApi(() => api.getParcels({ limit: 300 }))
+  const { data: statistics } = useApi(() => api.getStatistics())
   const [job, setJob] = useState<HarmonizationJob | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mappingError, setMappingError] = useState<string | null>(null)
   const [savingMappingId, setSavingMappingId] = useState<string | null>(null)
+  const latestJobId = useRef<string | null>(null)
   const canReviewMappings = !userRole || userRole === 'reviewer' || userRole === 'administrator'
 
   useEffect(() => {
@@ -37,6 +39,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         const jobs = await api.listJobs()
         if (!active || jobs.length === 0) return
         let latest = jobs[0]
+        latestJobId.current = latest.id
         setJob(latest)
         if (latest.status === 'queued' || latest.status === 'running') setRunning(true)
         while (active && (latest.status === 'queued' || latest.status === 'running')) {
@@ -76,15 +79,42 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
   }
 
   const handleRun = async () => {
+    const requestStartedAt = Date.now()
+    const previousJobId = latestJobId.current
     setRunning(true)
     setError(null)
     setJob(null)
     try {
-      let result = await api.runHarmonization()
+      let requestSettled = false
+      const request = api.runHarmonization()
+      void request.then(() => { requestSettled = true }, () => { requestSettled = true })
+
+      // Hosted free-demo harmonization is synchronous: POST returns the final
+      // job only when processing ends. Read committed stages in parallel so
+      // the UI follows actual backend progress while that request is pending.
+      while (freeDemoMode && !requestSettled) {
+        await wait(900)
+        if (requestSettled) break
+        try {
+          const jobs = await api.listJobs()
+          const activeJob = jobs.find((candidate) => candidate.id !== previousJobId
+            && Date.parse(candidate.started_at) >= requestStartedAt - 15_000)
+          if (activeJob) {
+            latestJobId.current = activeJob.id
+            setJob(activeJob)
+          }
+        } catch {
+          // Keep the POST as the source of truth if a status poll is transiently unavailable.
+        }
+      }
+
+      let result = await request
+      latestJobId.current = result.id
       setJob(result)
       while (result.status === 'queued' || result.status === 'running') {
         await wait(1200)
         result = await api.getJob(result.id)
+        latestJobId.current = result.id
         setJob(result)
       }
       if (result.status === 'failed') {
@@ -101,13 +131,36 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
     }
   }
 
-  const getStageStatus = (name: string) => {
-    if (!job) return 'pending'
-    const stage = job.stages.find((s) => s.name === name)
+  const getStageStatus = (name: string, index: number) => {
+    const stage = job?.stages.find((s) => s.name === name)
+    if (stage?.status === 'failed' || stage?.status === 'disabled' || stage?.status === 'completed') return stage.status
+    if (job?.status === 'completed') return 'completed'
+    if (job?.status === 'failed') {
+      const failedAt = PIPELINE_STAGE_NAMES.findIndex((stageName) =>
+        job.stages.some((item) => item.name === stageName && item.status === 'failed'))
+      const activeAt = PIPELINE_STAGE_NAMES.findIndex((stageName) =>
+        job.stages.some((item) => item.name === stageName && item.status === 'running'))
+      const lastCompleted = PIPELINE_STAGE_NAMES.reduce((last, stageName, stageIndex) =>
+        job.stages.some((item) => item.name === stageName && item.status === 'completed') ? stageIndex : last, -1)
+      const failureIndex = failedAt >= 0 ? failedAt : activeAt >= 0 ? activeAt : Math.min(lastCompleted + 1, PIPELINE_STAGE_NAMES.length - 1)
+      return index === failureIndex ? 'failed' : index < failureIndex ? (stage?.status || 'completed') : 'pending'
+    }
+    if (stage?.status === 'running') return 'running'
+    if (job?.status === 'queued' || job?.status === 'running' || (running && !job)) {
+      const backendActive = job?.stages.find((item) => item.status === 'running')
+      if (backendActive) return backendActive.name === name ? 'running' : (stage?.status || 'pending')
+      const nextStage = PIPELINE_STAGE_NAMES.find((stageName) =>
+        !job?.stages.some((item) => item.name === stageName && (item.status === 'completed' || item.status === 'disabled')))
+      if (nextStage === name) return job?.status === 'queued' ? 'queued' : 'running'
+    }
     return stage?.status || 'pending'
   }
 
   const getStageDetail = (name: string) => job?.stages.find((s) => s.name === name)
+  const stageStatuses = PIPELINE_STAGE_NAMES.map((name, index) => getStageStatus(name, index))
+  const completedStageCount = stageStatuses.filter((status) => status === 'completed').length
+  const progressPercent = job?.status === 'completed' ? 100 : Math.min(95, Math.round((completedStageCount / PIPELINE_STAGE_NAMES.length) * 100))
+  const resultsReady = job?.status === 'completed'
 
   return (
     <div>
@@ -147,20 +200,31 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           <div className="mb-5 flex items-center justify-between gap-3">
             <h3 className="text-sm font-bold text-ink-800">Pipeline Stages</h3>
             {job?.status === 'queued' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Queued for worker</span>}
+            {running && !job && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Starting</span>}
+          </div>
+          <div className="mb-6">
+            <div className="mb-2 flex items-center justify-between text-xs text-ink-500">
+              <span>{job?.status === 'completed' ? 'Pipeline complete' : job?.status === 'failed' ? 'Pipeline failed' : running ? 'Processing pipeline' : 'Ready to run'}</span>
+              <span className="font-semibold text-ink-700">{progressPercent}%</span>
+            </div>
+            <div role="progressbar" aria-label="Harmonization progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progressPercent} className="h-2 overflow-hidden rounded-full bg-ink-100">
+              <div className={`h-full rounded-full transition-[width] duration-500 ${job?.status === 'failed' ? 'bg-red-500' : 'bg-brand-600'}`} style={{ width: `${progressPercent}%` }} />
+            </div>
           </div>
           <div className="space-y-0">
             {PIPELINE_STAGE_NAMES.map((name, i) => {
-              const status = getStageStatus(name)
+              const status = getStageStatus(name, i)
               const detail = getStageDetail(name)
+              const isActive = status === 'running' || status === 'queued'
               return (
                 <div key={name} className="flex gap-4">
                   <div className="flex flex-col items-center">
                     <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                       status === 'completed' ? 'bg-emerald-700 text-white' :
                       status === 'failed' ? 'bg-red-500 text-white' :
-                      status === 'running' ? 'bg-amber-400 text-white' : 'bg-ink-100 text-ink-400'
+                      isActive ? 'bg-amber-400 text-white ring-4 ring-amber-100' : 'bg-ink-100 text-ink-400'
                     }`}>
-                      {status === 'completed' ? <CheckCircle2 size={15} /> : i + 1}
+                      {status === 'completed' ? <CheckCircle2 size={15} /> : isActive ? <Loader2 size={15} className="animate-spin" /> : i + 1}
                     </div>
                     {i < PIPELINE_STAGE_NAMES.length - 1 && (
                       <div className={`w-0.5 flex-1 ${status === 'completed' ? 'bg-brand-300' : 'bg-ink-100'}`} style={{ minHeight: 28 }} />
@@ -174,6 +238,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
                       {status === 'disabled' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Disabled in hosted demo</span>}
                       {status === 'pending' && <span className="badge bg-ink-100 text-ink-400">Pending</span>}
                       {status === 'running' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Running</span>}
+                      {status === 'queued' && <span className="badge bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200">Queued</span>}
                     </div>
                     {detail ? (
                       <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-ink-500">
@@ -202,7 +267,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           )}
         </div>
 
-        <section className="card p-5" aria-label="Latest harmonization results">
+        {resultsReady ? <section className="card p-5" aria-label="Latest harmonization results">
           <h3 className="mb-4 text-sm font-bold text-ink-800">Latest Results</h3>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <ResultCount label="Matches" value={matches?.length} />
@@ -213,10 +278,13 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           </div>
           <p className="mt-3 text-xs text-ink-500">
             {parcels?.length ? `Mean parcel confidence: ${(parcels.reduce((sum, parcel) => sum + parcel.confidence_score, 0) / parcels.length).toFixed(1)}%` : 'Confidence results appear when unified parcels are available.'}
+            {statistics && ` · Statistics API: ${statistics.total_datasets} datasets, ${statistics.total_parcels} parcels, ${statistics.matched_features} matched features, ${statistics.total_conflicts} conflicts`}
           </p>
-        </section>
+        </section> : <div className="card p-5 text-xs text-ink-500" role="status">
+          {job?.status === 'failed' || error ? 'Results remain hidden because this harmonization run did not complete successfully.' : 'Run harmonization to generate and review current results.'}
+        </div>}
 
-        <div className="card p-5">
+        {resultsReady && <div className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-ink-800">Intelligent Attribute Mapping</h3>
           <p className="mb-3 text-xs text-ink-400">
             Source fields are mapped to canonical fields using fuzzy string similarity + datatype inference,
@@ -272,7 +340,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
               </tbody>
             </table>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   )
