@@ -37,7 +37,9 @@ def trigger_harmonization(request: Request, db: Session = Depends(get_db),
                           user: User | None = Depends(current_user)):
     # The hosted evaluator can request the bounded, synchronous vector demo
     # workflow. Other review/write actions remain denied by the evaluator role.
-    if not (settings.FREE_DEMO_MODE and user is not None and user.role == "evaluator"):
+    if settings.FREE_DEMO_MODE and user is not None and user.role == "evaluator":
+        require_permission(user, "harmonize:free_demo")
+    else:
         require_permission(user, "review")
 
     # Local SQLite demo and the explicitly bounded hosted demo use their

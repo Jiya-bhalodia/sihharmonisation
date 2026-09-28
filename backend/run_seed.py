@@ -95,6 +95,8 @@ def _hosted_demo_gnss_csv(content):
 
 
 def seed(reset=False):
+    logger.info("Seed requested (free_demo_mode=%s, reset=%s, fixture_dir=%s)",
+                settings.FREE_DEMO_MODE, reset, SAMPLE_DIR)
     if reset:
         print("Reset requested: dropping and recreating all tables...")
         Base.metadata.drop_all(bind=engine)
@@ -109,7 +111,7 @@ def seed(reset=False):
             db.execute(text("SELECT pg_advisory_lock(26013, 2026)"))
             advisory_lock = True
         if not reset and not settings.FREE_DEMO_MODE and db.query(Dataset).count():
-            print("Sample seed skipped: datasets already exist; existing database was left unchanged.")
+            logger.info("Sample seed skipped: datasets already exist; existing database was left unchanged")
             return False
         if not os.path.isdir(SAMPLE_DIR):
             raise RuntimeError(f"Sample data directory not found: {SAMPLE_DIR}")
@@ -161,7 +163,7 @@ def seed(reset=False):
             save_snapshot(db)
         latest_job = db.query(HarmonizationJob).order_by(HarmonizationJob.started_at.desc()).first()
         if settings.FREE_DEMO_MODE and not added_dataset and latest_job and latest_job.status == "completed":
-            print("Hosted demo fixtures and harmonization outputs are already present.")
+            logger.info("Hosted demo fixtures and harmonization outputs are already present; seed skipped")
             return False
         from app.services.harmonization_service import run_harmonization
         from app.services.change_service import detect_changes
@@ -169,12 +171,18 @@ def seed(reset=False):
             db,
             max_processing_seconds=(settings.FREE_DEMO_MAX_PROCESSING_SECONDS if settings.FREE_DEMO_MODE else None),
         )
+        if settings.FREE_DEMO_MODE and job.status != "completed":
+            raise RuntimeError(f"Hosted demo seed harmonization did not complete (status={job.status})")
         if job.status == "completed" and not settings.FREE_DEMO_MODE:
             detect_changes(db, job.id)
+        logger.info("Seed complete; harmonization status: %s", job.status)
         print(f"\nSeed complete; harmonization status: {job.status}.")
         print("To demo Change Detection: upload data/sample/drone_buildings_v2.geojson as a new")
         print("'municipal' dataset via Data Sources, then re-run harmonization.")
         return True
+    except Exception:
+        logger.exception("Sample data seed failed")
+        raise
     finally:
         if advisory_lock:
             try:

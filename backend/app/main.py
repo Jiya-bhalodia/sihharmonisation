@@ -42,9 +42,15 @@ def on_startup():
     # sleep or restart. Ensure its deterministic fixture exists independently
     # of the opt-in local-demo setting; seed() is idempotent in free-demo mode.
     if settings.LOAD_SAMPLE_DATA or settings.FREE_DEMO_MODE:
-        from run_seed import seed
-        loaded = seed()
-        logger.info(f"Synthetic sample data {'loaded' if loaded else 'already present'}")
+        logger.info("Starting synthetic sample data seed (free_demo_mode=%s, load_sample_data=%s)",
+                    settings.FREE_DEMO_MODE, settings.LOAD_SAMPLE_DATA)
+        try:
+            from run_seed import seed
+            loaded = seed()
+        except Exception:
+            logger.exception("Synthetic sample data seed failed; startup will not continue")
+            raise
+        logger.info("Synthetic sample data seed %s", "completed" if loaded else "skipped; already seeded")
 
 
 @app.get("/")

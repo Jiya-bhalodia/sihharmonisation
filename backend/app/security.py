@@ -23,8 +23,8 @@ ROLE_PERMISSIONS = {
     "revenue_officer": {"upload:revenue", "view:owner_data", "export"},
     "municipal_officer": {"upload:municipal", "upload:utility", "upload:drone", "upload:land_use", "view:records"},
     "reviewer": {"review", "view:records", "view:owner_data", "export"},
-    # Public evaluation access is intentionally read-only and owner-redacted.
-    "evaluator": {"view:records"},
+    # Public evaluation access is owner-redacted, with only bounded hosted harmonization added.
+    "evaluator": {"view:records", "harmonize:free_demo"},
     "administrator": {"*"},
 }
 FREE_DEMO_USER_ID = "US_FREE_DEMO_EVALUATOR"

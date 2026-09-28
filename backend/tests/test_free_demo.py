@@ -95,6 +95,7 @@ def test_evaluator_is_read_only_and_cannot_access_privileged_actions():
             require_permission(SimpleNamespace(role="evaluator"), permission)
         assert error.value.status_code == 403
     require_permission(SimpleNamespace(role="administrator"), "review")
+    require_permission(SimpleNamespace(role="evaluator"), "harmonize:free_demo")
 
     # Check an actual mutating route's authorization guard, before it touches the DB.
     from app.api.conflicts import resolve_conflict
@@ -105,6 +106,33 @@ def test_evaluator_is_read_only_and_cannot_access_privileged_actions():
         resolve_conflict("missing", SimpleNamespace(status="Resolved"), request, object(),
                          SimpleNamespace(role="evaluator"))
     assert error.value.status_code == 403
+
+
+def test_free_demo_evaluator_can_run_only_explicit_bounded_harmonization_permission(monkeypatch):
+    import app.api.harmonize as api
+
+    class FakeDB:
+        def commit(self): pass
+        def refresh(self, _value): pass
+
+    job = SimpleNamespace(id="job-1", status="completed", total_processed=1)
+    monkeypatch.setattr(api, "settings", SimpleNamespace(is_local_demo_mode=False, FREE_DEMO_MODE=True,
+                                                           FREE_DEMO_MAX_PROCESSING_SECONDS=20))
+    job_types = []
+    monkeypatch.setattr(api, "require_job_type", lambda job_type, _settings: job_types.append(job_type))
+    monkeypatch.setattr(api, "ensure_existing_capacity", lambda *_args: None)
+    monkeypatch.setattr(api, "run_harmonization", lambda *_args, **_kwargs: job)
+    monkeypatch.setattr(api, "_add_pilot_readiness_warning", lambda *_args: None)
+    monkeypatch.setattr(api, "write_audit", lambda *_args, **_kwargs: None)
+
+    from starlette.requests import Request
+    request = Request({"type": "http", "method": "POST", "path": "/api/harmonize", "headers": [],
+                       "client": ("127.0.0.1", 1234), "query_string": b""})
+    result = api.trigger_harmonization(request, FakeDB(), SimpleNamespace(id="US_FREE_DEMO_EVALUATOR",
+                                                                          email="demo@bhumi-x.local",
+                                                                          role="evaluator"))
+    assert result.status == "completed"
+    assert job_types == ["vector_harmonization"]
 
 
 def test_free_demo_requires_authentication(monkeypatch):
