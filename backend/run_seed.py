@@ -27,6 +27,7 @@ from app.models.orm import Dataset, HarmonizationJob
 from app.services.dataset_service import ingest_geojson_dict
 from app.services.change_service import save_snapshot
 from app.config import get_settings
+from app.sample_data import get_sample_data_dir
 from app.utils.logger import get_logger
 from sqlalchemy import text
 from shapely.geometry import shape
@@ -34,8 +35,7 @@ from shapely.geometry import shape
 logger = get_logger("run_seed")
 settings = get_settings()
 
-SAMPLE_DIR = os.environ.get("SAMPLE_DATA_DIR", os.path.join(os.path.dirname(__file__), settings.DATA_DIR, "sample"))
-SAMPLE_DIR = os.path.abspath(SAMPLE_DIR)
+SAMPLE_DIR = str(get_sample_data_dir())
 
 DATASET_DEFINITIONS = [
     {"file": "cadastral_parcels.geojson", "name": "[Synthetic / Illustrative] Cadastral Parcels - Ward 07",

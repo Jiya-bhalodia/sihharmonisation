@@ -14,16 +14,16 @@ COPY backend/app ./app
 COPY backend/migrations ./migrations
 COPY backend/run_seed.py ./run_seed.py
 # Only reviewed generated fixtures required by run_seed.py are included.
-COPY data/sample/cadastral_parcels.geojson /opt/demo-data/sample/cadastral_parcels.geojson
-COPY data/sample/revenue_records.geojson /opt/demo-data/sample/revenue_records.geojson
-COPY data/sample/municipal_buildings.geojson /opt/demo-data/sample/municipal_buildings.geojson
-COPY data/sample/ground_truth_points.geojson /opt/demo-data/sample/ground_truth_points.geojson
-COPY data/sample/utility_lines.geojson /opt/demo-data/sample/utility_lines.geojson
-COPY data/sample/gnss_survey_points.csv /opt/demo-data/sample/gnss_survey_points.csv
-COPY data/sample/land_use.geojson /opt/demo-data/sample/land_use.geojson
-COPY data/sample/hosted_demo_aoi.geojson /opt/demo-data/sample/hosted_demo_aoi.geojson
+COPY data/sample/cadastral_parcels.geojson /app/data/sample/cadastral_parcels.geojson
+COPY data/sample/revenue_records.geojson /app/data/sample/revenue_records.geojson
+COPY data/sample/municipal_buildings.geojson /app/data/sample/municipal_buildings.geojson
+COPY data/sample/ground_truth_points.geojson /app/data/sample/ground_truth_points.geojson
+COPY data/sample/utility_lines.geojson /app/data/sample/utility_lines.geojson
+COPY data/sample/gnss_survey_points.csv /app/data/sample/gnss_survey_points.csv
+COPY data/sample/land_use.geojson /app/data/sample/land_use.geojson
+COPY data/sample/hosted_demo_aoi.geojson /app/data/sample/hosted_demo_aoi.geojson
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
-    SAMPLE_DATA_DIR=/opt/demo-data/sample
+    SAMPLE_DATA_DIR=/app/data/sample
 EXPOSE 10000
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

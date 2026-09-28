@@ -6,13 +6,13 @@ named file exists.  Departmental approval and legal authority still require a
 human decision outside the application.
 """
 from collections import defaultdict
-import os
 from pathlib import Path
 from typing import Any, Iterable
 
 from sqlalchemy.orm import Session
 
 from app.models.orm import Dataset, Feature
+from app.sample_data import get_sample_data_dir
 
 
 PARCEL_ID_FIELDS = {"parcel_id", "survey_no", "survey_number", "gat_no", "survey_gat_no", "cts_no", "plot_no"}
@@ -114,9 +114,11 @@ def get_pilot_readiness(db: Session, free_demo_mode: bool = False) -> dict[str, 
     }
     project_root = Path(__file__).resolve().parents[3]
     if free_demo_mode:
-        sample_dir = Path(os.environ.get("SAMPLE_DATA_DIR", project_root / "data" / "sample"))
-        aoi_path = sample_dir / "hosted_demo_aoi.geojson"
+        try:
+            aoi_exists = (get_sample_data_dir() / "hosted_demo_aoi.geojson").is_file()
+        except FileNotFoundError:
+            aoi_exists = False
     else:
         aoi_path = project_root / "data" / "raw" / "pilot" / "aoi.geojson"
-    aoi_exists = aoi_path.is_file()
+        aoi_exists = aoi_path.is_file()
     return evaluate_pilot_readiness(datasets, features_by_dataset, aoi_exists, free_demo_mode)
