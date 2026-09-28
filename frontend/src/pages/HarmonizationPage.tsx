@@ -101,6 +101,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
     setError(null)
     setJob(null)
     setEstimatedStageIndex(0)
+    let completionConfirmed = false
     try {
       let requestSettled = false
       const request = api.runHarmonization()
@@ -110,7 +111,7 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
       // for the synchronous POST response or its completion handling.
       if (freeDemoMode) {
         void (async () => {
-          while (!requestSettled && activeRunId.current === runId) {
+          while (!requestSettled && !completionConfirmed && activeRunId.current === runId) {
             await wait(900)
             if (requestSettled || activeRunId.current !== runId) return
             try {
@@ -124,9 +125,15 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
                   : `${candidate.started_at}Z`
                 return Date.parse(timestamp) >= requestStartedAt - 60_000
               })
-              // A completed row is not enough to finish the UI: the synchronous
-              // POST response remains authoritative for hosted runs.
-              if (activeJob && activeJob.status !== 'completed') {
+              if (activeJob?.status === 'completed') {
+                // The committed database job is the backend's completion
+                // signal. This also recovers results if the synchronous POST
+                // response is delayed after the pipeline itself has finished.
+                completionConfirmed = true
+                latestJobId.current = activeJob.id
+                setJob(activeJob)
+                window.dispatchEvent(new Event('bhumix:data-updated'))
+              } else if (activeJob) {
                 latestJobId.current = activeJob.id
                 setJob(activeJob)
               }
@@ -154,12 +161,13 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         setError(failure?.detail || 'Harmonization failed. Check the backend worker logs for details.')
       }
       if (result.status === 'completed') {
+        completionConfirmed = true
         window.dispatchEvent(new Event('bhumix:data-updated'))
       } else if (result.status !== 'failed') {
         setError(`Harmonization returned an unexpected status: ${result.status || 'unknown'}.`)
       }
     } catch (e: unknown) {
-      if (activeRunId.current === runId) {
+      if (activeRunId.current === runId && !completionConfirmed) {
         setError(e instanceof Error ? e.message : 'Harmonization failed. Check that the backend is running, then try again.')
       }
     } finally {
@@ -180,6 +188,18 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         job.stages.some((item) => item.name === stageName && item.status === 'completed') ? stageIndex : last, -1)
       const failureIndex = failedAt >= 0 ? failedAt : activeAt >= 0 ? activeAt : Math.min(lastCompleted + 1, PIPELINE_STAGE_NAMES.length - 1)
       return index === failureIndex ? 'failed' : index < failureIndex ? (stage?.status || 'completed') : 'pending'
+    }
+    if (freeDemoMode && running) {
+      // The hosted POST is synchronous; persisted stage rows can remain on an
+      // early "running" stage during a long operation. Advance the display
+      // conservatively while the request is active, using backend progress
+      // whenever it is further ahead. Completion still requires backend proof.
+      const backendActiveIndex = PIPELINE_STAGE_NAMES.findIndex((stageName) =>
+        job?.stages.some((item) => item.name === stageName && item.status === 'running'))
+      const visibleActiveIndex = Math.max(estimatedStageIndex, backendActiveIndex, 0)
+      if (index < visibleActiveIndex) return 'completed'
+      if (index === visibleActiveIndex) return 'running'
+      return 'pending'
     }
     if (stage?.status === 'running') return 'running'
     if (job?.status === 'queued' || job?.status === 'running' || (running && !job)) {
