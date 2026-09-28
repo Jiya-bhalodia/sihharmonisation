@@ -54,7 +54,13 @@ DATASET_DEFINITIONS = [
 
 # Keep hosted Postgres work comfortably inside its synchronous processing
 # budget while drawing every shape/property from the checked-in demo fixtures.
-HOSTED_DEMO_PARCEL_IDS = {f"P-{number:04d}" for number in range(101, 132)}
+# Keep ten GNSS-linked parcels in the hosted subset: pilot readiness requires
+# ten observations, and bounding other parcel candidates reduces the
+# synchronous GNSS-outside-parcel comparisons on the Render Free instance.
+HOSTED_DEMO_PARCEL_IDS = {
+    "P-0103", "P-0109", "P-0113", "P-0115", "P-0116",
+    "P-0117", "P-0118", "P-0119", "P-0129", "P-0131",
+}
 
 
 def _hosted_demo_geojson(geojson, source_type):
