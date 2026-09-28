@@ -34,18 +34,37 @@ BOUNDARY_CROSS_MAX_IOU = 0.85    # if IoU is this high the building is essential
 
 
 def detect_all_conflicts(db: Session, candidates: List[MatchCandidate], matched_groups: Dict[str, MatchCandidate],
-                         deadline_check=None) -> int:
+                         deadline_check=None, preload_hosted_rows: bool = False) -> int:
     db.query(Conflict).filter(Conflict.status == "Open").delete()
     db.commit()
+
+    # Batch the bounded hosted seed's conflict inputs to avoid repeated remote
+    # ORM round trips without changing which persisted rows are evaluated.
+    hosted_rows = None
+    if preload_hosted_rows:
+        match_records = db.query(MatchRecord).all()
+        features = db.query(Feature).all()
+        hosted_rows = {
+            "records_by_group": defaultdict(list),
+            "features_by_id": {feature.id: feature for feature in features},
+            "features_by_dataset": defaultdict(list),
+            "datasets": db.query(Dataset).all(),
+        }
+        for record in match_records:
+            hosted_rows["records_by_group"][record.matched_group_id].append(record)
+        for feature in features:
+            hosted_rows["features_by_dataset"][feature.dataset_id].append(feature)
+        if deadline_check:
+            deadline_check()
 
     count = 0
     count += _detect_parcel_overlaps(db, candidates, deadline_check)
     count += _detect_building_boundary_crossings(db, candidates, deadline_check)
     count += _detect_utility_crossings(db, candidates, deadline_check)
-    count += _detect_area_mismatches(db, matched_groups, deadline_check)
-    count += _detect_duplicate_ids(db, deadline_check)
+    count += _detect_area_mismatches(db, matched_groups, deadline_check, hosted_rows)
+    count += _detect_duplicate_ids(db, deadline_check, hosted_rows)
     count += _detect_gnss_outside_parcel(db, candidates, deadline_check)
-    count += _detect_owner_conflicts(db, matched_groups, deadline_check)
+    count += _detect_owner_conflicts(db, matched_groups, deadline_check, hosted_rows)
     db.commit()
     return count
 
@@ -158,13 +177,19 @@ def _detect_utility_crossings(db: Session, candidates: List[MatchCandidate], dea
     return count
 
 
-def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None) -> int:
+def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None,
+                            hosted_rows=None) -> int:
     """Compare area of matched features across sources within the same
     group, always including the group's anchor feature (typically the
     authoritative cadastral parcel)."""
-    groups = defaultdict(list)
-    for rec in db.query(MatchRecord).all():
-        groups[rec.matched_group_id].append(rec)
+    if hosted_rows is None:
+        groups = defaultdict(list)
+        for rec in db.query(MatchRecord).all():
+            groups[rec.matched_group_id].append(rec)
+        features_by_id = None
+    else:
+        groups = hosted_rows["records_by_group"]
+        features_by_id = hosted_rows["features_by_id"]
 
     count = 0
     for group_id, anchor in matched_groups.items():
@@ -172,10 +197,14 @@ def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidat
             deadline_check()
         records = groups.get(group_id, [])
         feature_ids = [r.feature_id for r in records]
-        features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
+        if features_by_id is not None:
+            features = [features_by_id[fid] for fid in feature_ids if fid in features_by_id]
+        else:
+            features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
         areas = [(f, f.area_sqm) for f in features if f.area_sqm and f.area_sqm > 0]
 
-        anchor_feature = db.query(Feature).filter(Feature.id == anchor.feature_id).first()
+        anchor_feature = (features_by_id.get(anchor.feature_id) if features_by_id is not None else
+                          db.query(Feature).filter(Feature.id == anchor.feature_id).first())
         if anchor_feature and anchor_feature.area_sqm and anchor_feature.area_sqm > 0:
             areas.append((anchor_feature, anchor_feature.area_sqm))
 
@@ -200,12 +229,14 @@ def _detect_area_mismatches(db: Session, matched_groups: Dict[str, MatchCandidat
     return count
 
 
-def _detect_duplicate_ids(db: Session, deadline_check=None) -> int:
+def _detect_duplicate_ids(db: Session, deadline_check=None, hosted_rows=None) -> int:
     count = 0
-    for dataset in db.query(Dataset).all():
+    datasets = hosted_rows["datasets"] if hosted_rows is not None else db.query(Dataset).all()
+    for dataset in datasets:
         if deadline_check:
             deadline_check()
-        features = db.query(Feature).filter(Feature.dataset_id == dataset.id).all()
+        features = (hosted_rows["features_by_dataset"].get(dataset.id, []) if hosted_rows is not None
+                    else db.query(Feature).filter(Feature.dataset_id == dataset.id).all())
         seen = {}
         for f in features:
             if deadline_check:
@@ -255,11 +286,17 @@ def _detect_gnss_outside_parcel(db: Session, candidates: List[MatchCandidate], d
     return count
 
 
-def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None) -> int:
+def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidate], deadline_check=None,
+                            hosted_rows=None) -> int:
     from difflib import SequenceMatcher
-    groups = defaultdict(list)
-    for rec in db.query(MatchRecord).all():
-        groups[rec.matched_group_id].append(rec)
+    if hosted_rows is None:
+        groups = defaultdict(list)
+        for rec in db.query(MatchRecord).all():
+            groups[rec.matched_group_id].append(rec)
+        features_by_id = None
+    else:
+        groups = hosted_rows["records_by_group"]
+        features_by_id = hosted_rows["features_by_id"]
 
     count = 0
     for group_id, anchor in matched_groups.items():
@@ -267,10 +304,14 @@ def _detect_owner_conflicts(db: Session, matched_groups: Dict[str, MatchCandidat
             deadline_check()
         records = groups.get(group_id, [])
         feature_ids = [r.feature_id for r in records]
-        features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
+        if features_by_id is not None:
+            features = [features_by_id[fid] for fid in feature_ids if fid in features_by_id]
+        else:
+            features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
 
         owner_entries = []
-        anchor_feature = db.query(Feature).filter(Feature.id == anchor.feature_id).first()
+        anchor_feature = (features_by_id.get(anchor.feature_id) if features_by_id is not None else
+                          db.query(Feature).filter(Feature.id == anchor.feature_id).first())
         if anchor_feature:
             props = anchor_feature.raw_properties or {}
             for key in ("owner", "owner_name", "landholder", "property_owner"):

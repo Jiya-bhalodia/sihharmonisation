@@ -168,6 +168,12 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
         _stage(db, job, "Schema Mapping", "completed", processed=mapping_count, warnings=review_count,
                detail=f"{mapping_count} fields mapped, {review_count} flagged for review")
 
+        mappings_by_dataset = None
+        if settings.FREE_DEMO_MODE:
+            mappings_by_dataset = defaultdict(list)
+            for mapping in db.query(AttributeMapping).all():
+                mappings_by_dataset[mapping.dataset_id].append(mapping)
+
         # --- Stage 4: Topology Validation ---
         _stage(db, job, "Topology Validation", "running", processed=0,
                detail=f"Checking geometry validity and spatial-index candidates across {len(all_features)} features")
@@ -287,7 +293,9 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
                 centroid_lat=f.centroid_lat,
                 centroid_lon=f.centroid_lon,
                 area=f.area_sqm,
-                properties=_apply_canonical_mapping(db, f),
+                properties=_apply_canonical_mapping(
+                    db, f, mappings_by_dataset.get(f.dataset_id, []) if mappings_by_dataset is not None else None
+                ),
                 source_type=ds.source_type if ds else "unknown",
             )
             all_candidates.append(mc)
@@ -382,6 +390,7 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
         conflict_count = detect_all_conflicts(
             db, all_candidates, matched_groups,
             deadline_check=lambda: check_processing_deadline(deadline),
+            preload_hosted_rows=settings.FREE_DEMO_MODE,
         )
         check_processing_deadline(deadline)
         _stage(db, job, "Conflict Detection", "completed", processed=len(all_candidates), warnings=conflict_count,
@@ -393,6 +402,7 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
         unified_count = _build_unified_parcels(
             db, matched_groups,
             deadline_check=lambda: check_processing_deadline(deadline),
+            preload_hosted_rows=settings.FREE_DEMO_MODE,
         )
         _stage(db, job, "Confidence Scoring", "completed", processed=unified_count,
                detail="Spatial, attribute, geometry and source-agreement confidence computed per parcel")
@@ -432,10 +442,11 @@ def run_harmonization(db: Session, existing_job_id: str | None = None,
         return job
 
 
-def _apply_canonical_mapping(db: Session, feature: Feature) -> Dict[str, Any]:
+def _apply_canonical_mapping(db: Session, feature: Feature, mappings=None) -> Dict[str, Any]:
     """Rewrite a feature's raw properties into canonical field names using
     the stored attribute mappings for its dataset."""
-    mappings = db.query(AttributeMapping).filter(AttributeMapping.dataset_id == feature.dataset_id).all()
+    if mappings is None:
+        mappings = db.query(AttributeMapping).filter(AttributeMapping.dataset_id == feature.dataset_id).all()
     canonical = {}
     props = feature.raw_properties or {}
     for m in mappings:
@@ -447,7 +458,7 @@ def _apply_canonical_mapping(db: Session, feature: Feature) -> Dict[str, Any]:
 
 
 def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidate"],
-                           deadline_check=None) -> int:
+                           deadline_check=None, preload_hosted_rows: bool = False) -> int:
     # Match rows may still reference results from an earlier run. Clear those
     # nullable links before replacing the unified parcel snapshot.
     db.query(MatchRecord).update({MatchRecord.parcel_unified_id: None}, synchronize_session=False)
@@ -455,16 +466,40 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
     db.query(UnifiedParcel).delete()
     db.commit()
 
+    hosted_rows = None
+    if preload_hosted_rows:
+        records = db.query(MatchRecord).all()
+        features = db.query(Feature).all()
+        datasets = db.query(Dataset).all()
+        mappings_by_dataset = defaultdict(list)
+        for mapping in db.query(AttributeMapping).all():
+            mappings_by_dataset[mapping.dataset_id].append(mapping)
+        records_by_group = defaultdict(list)
+        for record in records:
+            records_by_group[record.matched_group_id].append(record)
+        hosted_rows = {
+            "records_by_group": records_by_group,
+            "features_by_id": {feature.id: feature for feature in features},
+            "datasets_by_id": {dataset.id: dataset for dataset in datasets},
+            "mappings_by_dataset": mappings_by_dataset,
+        }
+
     count = 0
     for group_id, anchor in matched_groups.items():
         if deadline_check:
             deadline_check()
-        records = db.query(MatchRecord).filter(MatchRecord.matched_group_id == group_id).all()
+        records = (hosted_rows["records_by_group"].get(group_id, []) if hosted_rows is not None else
+                   db.query(MatchRecord).filter(MatchRecord.matched_group_id == group_id).all())
         feature_ids = [r.feature_id for r in records]
-        features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
-        feature_map = {f.id: f for f in features}
+        if hosted_rows is not None:
+            feature_map = {fid: hosted_rows["features_by_id"][fid]
+                           for fid in feature_ids if fid in hosted_rows["features_by_id"]}
+        else:
+            features = db.query(Feature).filter(Feature.id.in_(feature_ids)).all() if feature_ids else []
+            feature_map = {f.id: f for f in features}
 
-        anchor_feature = db.query(Feature).filter(Feature.id == anchor.feature_id).first()
+        anchor_feature = (hosted_rows["features_by_id"].get(anchor.feature_id) if hosted_rows is not None else
+                          db.query(Feature).filter(Feature.id == anchor.feature_id).first())
 
         lineage: Dict[str, Any] = {}
         owner_names, land_uses, survey_numbers = [], [], []
@@ -477,11 +512,15 @@ def _build_unified_parcels(db: Session, matched_groups: Dict[str, "MatchCandidat
         def _absorb(f: Feature, lineage_confidence: float):
             nonlocal building_count, utility_count, gnss_verified, ground_truth_verified
             nonlocal cadastral_geom_geojson, cadastral_area, fallback_geom_geojson, fallback_area
-            dataset = db.query(Dataset).filter(Dataset.id == f.dataset_id).first()
+            dataset = (hosted_rows["datasets_by_id"].get(f.dataset_id) if hosted_rows is not None else
+                       db.query(Dataset).filter(Dataset.id == f.dataset_id).first())
             if not dataset:
                 return
             source_types_seen.add(dataset.source_type)
-            canonical_props = _apply_canonical_mapping(db, f)
+            canonical_props = _apply_canonical_mapping(
+                db, f, hosted_rows["mappings_by_dataset"].get(f.dataset_id, [])
+                if hosted_rows is not None else None
+            )
             contributed_fields = list(canonical_props.keys())
             lineage[dataset.source_type] = {
                 "dataset_id": dataset.id,
