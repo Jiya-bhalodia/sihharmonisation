@@ -23,13 +23,16 @@ import io
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app.database import Base, engine, SessionLocal, init_db
-from app.models.orm import Dataset, HarmonizationJob
+from app.models.orm import (
+    AttributeMapping, Dataset, Feature, HarmonizationJob,
+    MatchRecord, UnifiedParcel, ValidationResult,
+)
 from app.services.dataset_service import ingest_geojson_dict
 from app.services.change_service import save_snapshot
 from app.config import get_settings
 from app.sample_data import get_sample_data_dir
 from app.utils.logger import get_logger
-from sqlalchemy import text
+from sqlalchemy import func, text
 from shapely.geometry import shape
 
 logger = get_logger("run_seed")
@@ -61,6 +64,13 @@ HOSTED_DEMO_PARCEL_IDS = {
     "P-0103", "P-0109", "P-0113", "P-0115", "P-0116",
     "P-0117", "P-0118", "P-0119", "P-0129", "P-0131",
 }
+
+HOSTED_DEMO_GNSS_DATASET_NAME = "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07"
+HOSTED_DEMO_REQUIRED_STAGES = (
+    "Ingestion", "CRS Normalization", "Schema Mapping", "Topology Validation",
+    "Spatial Matching", "Conflict Detection", "Conflict Resolution",
+    "Confidence Scoring", "Unified Land Record",
+)
 
 
 def _hosted_demo_geojson(geojson, source_type):
@@ -100,6 +110,60 @@ def _hosted_demo_gnss_csv(content):
     return output.getvalue().encode("utf-8")
 
 
+def _hosted_demo_state_is_ready(db):
+    """Return true only when all bundled sources and generated outputs are present."""
+    expected_names = [definition["name"] for definition in DATASET_DEFINITIONS]
+    expected_names.append(HOSTED_DEMO_GNSS_DATASET_NAME)
+    datasets = db.query(Dataset).filter(Dataset.name.in_(expected_names)).all()
+    if len(datasets) != len(expected_names):
+        return False
+    if any(dataset.provenance != "synthetic_demo" or not dataset.feature_count
+           or dataset.feature_count <= 0
+           for dataset in datasets):
+        return False
+
+    dataset_ids = [dataset.id for dataset in datasets]
+    actual_feature_counts = dict(
+        db.query(Feature.dataset_id, func.count(Feature.id))
+        .filter(Feature.dataset_id.in_(dataset_ids))
+        .group_by(Feature.dataset_id)
+        .all()
+    )
+    if any(actual_feature_counts.get(dataset.id, 0) != dataset.feature_count
+           for dataset in datasets):
+        return False
+
+    latest_job = db.query(HarmonizationJob).order_by(HarmonizationJob.started_at.desc()).first()
+    if latest_job is None or latest_job.status != "completed":
+        return False
+    stages = {stage.get("name"): stage.get("status") for stage in (latest_job.stages or [])
+              if isinstance(stage, dict)}
+    if any(stages.get(stage) != "completed" for stage in HOSTED_DEMO_REQUIRED_STAGES):
+        return False
+    if stages.get("Change Detection") != "disabled":
+        return False
+
+    # Confirm persisted outputs from the completed matching, topology,
+    # attribute-mapping, confidence, and provenance stages.
+    if db.query(MatchRecord.id).filter(MatchRecord.dataset_id.in_(dataset_ids)).first() is None:
+        return False
+    if db.query(AttributeMapping.id).filter(AttributeMapping.dataset_id.in_(dataset_ids)).first() is None:
+        return False
+    if db.query(ValidationResult.id).filter(ValidationResult.dataset_id.in_(dataset_ids)).first() is None:
+        return False
+    unified_records = db.query(UnifiedParcel).all()
+    if not unified_records or latest_job.total_processed != len(unified_records):
+        return False
+    if not any(
+        record.confidence_score and isinstance(record.lineage, dict)
+        and any(isinstance(source, dict) and source.get("dataset_id") in dataset_ids
+                for source in record.lineage.values())
+        for record in unified_records
+    ):
+        return False
+    return True
+
+
 def seed(reset=False):
     logger.info("Seed requested (free_demo_mode=%s, reset=%s, fixture_dir=%s)",
                 settings.FREE_DEMO_MODE, reset, SAMPLE_DIR)
@@ -116,12 +180,14 @@ def seed(reset=False):
         if settings.FREE_DEMO_MODE and db.bind.dialect.name == "postgresql":
             db.execute(text("SELECT pg_advisory_lock(26013, 2026)"))
             advisory_lock = True
+        if not reset and settings.FREE_DEMO_MODE and _hosted_demo_state_is_ready(db):
+            logger.info("Hosted demo prepared state verified; startup seed skipped")
+            return False
         if not reset and not settings.FREE_DEMO_MODE and db.query(Dataset).count():
             logger.info("Sample seed skipped: datasets already exist; existing database was left unchanged")
             return False
         if not os.path.isdir(SAMPLE_DIR):
             raise RuntimeError(f"Sample data directory not found: {SAMPLE_DIR}")
-        added_dataset = False
         for definition in DATASET_DEFINITIONS:
             path = os.path.join(SAMPLE_DIR, definition["file"])
             if not os.path.exists(path):
@@ -144,12 +210,11 @@ def seed(reset=False):
                 source_type=definition["source_type"],
                 provenance="synthetic_demo",
             )
-            added_dataset = True
             print(f"  Ingested {ds.name}: {ds.feature_count} features (quality {ds.quality_score}%)")
 
         # GNSS points come from CSV
         gnss_csv_path = os.path.join(SAMPLE_DIR, "gnss_survey_points.csv")
-        gnss_name = "[Synthetic / Illustrative] GNSS/CORS Survey Points - Ward 07"
+        gnss_name = HOSTED_DEMO_GNSS_DATASET_NAME
         if os.path.exists(gnss_csv_path) and not db.query(Dataset).filter(Dataset.name == gnss_name).first():
             from app.services.dataset_service import ingest_csv_latlon
             with open(gnss_csv_path, "rb") as f:
@@ -160,17 +225,12 @@ def seed(reset=False):
                     source_type="gnss",
                     provenance="synthetic_demo",
             )
-            added_dataset = True
             print(f"  Ingested {ds.name}: {ds.feature_count} features (quality {ds.quality_score}%)")
 
         # Hosted free instances have no durable local filesystem, so do not
         # create a snapshot or imply snapshot-based change detection there.
         if not settings.FREE_DEMO_MODE:
             save_snapshot(db)
-        latest_job = db.query(HarmonizationJob).order_by(HarmonizationJob.started_at.desc()).first()
-        if settings.FREE_DEMO_MODE and not added_dataset and latest_job and latest_job.status == "completed":
-            logger.info("Hosted demo fixtures and harmonization outputs are already present; seed skipped")
-            return False
         from app.services.harmonization_service import run_harmonization
         from app.services.change_service import detect_changes
         job = run_harmonization(
