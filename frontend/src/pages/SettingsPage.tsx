@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react'
 import Topbar from '../components/Topbar'
 import { api } from '../services/api'
+import type { ApprovalRequest } from '../services/api'
 
 type Account = { id: string; email: string; full_name: string; role: string; is_active: boolean; created_at: string }
 type AuditEntry = { id: string; actor_email: string; action: string; resource_type: string; resource_id: string | null; created_at: string }
@@ -10,29 +11,51 @@ export default function SettingsPage() {
   const [targetCrs, setTargetCrs] = useState('EPSG:4326')
   const [matchDistance, setMatchDistance] = useState(75)
   const [weights, setWeights] = useState({ proximity: 35, overlap: 30, area: 15, attribute: 20 })
-  const [saved, setSaved] = useState(false)
   const [currentRole, setCurrentRole] = useState<string | null>(null)
+  const [freeDemoMode, setFreeDemoMode] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [auditRows, setAuditRows] = useState<AuditEntry[]>([])
   const [accountError, setAccountError] = useState('')
   const [accountNotice, setAccountNotice] = useState('')
   const [accountBusy, setAccountBusy] = useState(false)
   const [newAccount, setNewAccount] = useState({ email: '', full_name: '', role: 'survey_officer', password: '' })
+  const [approvalRequests, setApprovalRequests] = useState<ApprovalRequest[]>([])
+  const [newApproval, setNewApproval] = useState({ email: '', full_name: '', requested_role: 'survey_officer' })
+  const [approvalError, setApprovalError] = useState('')
+  const [approvalBusy, setApprovalBusy] = useState(false)
 
   const totalWeight = weights.proximity + weights.overlap + weights.area + weights.attribute
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
   const refreshAccounts = async () => setAccounts(await api.getUsers())
+  const refreshApprovalRequests = async () => setApprovalRequests(await api.getApprovalRequests())
   useEffect(() => {
-    api.me().then(async (session) => {
+    Promise.all([api.me(), api.health()]).then(async ([session, health]) => {
       setCurrentRole(session.role || null)
+      setFreeDemoMode(Boolean(health.free_demo_mode))
       if (session.role === 'administrator') await refreshAccounts()
+      if (session.role === 'administrator' || (health.free_demo_mode && session.role === 'evaluator')) await refreshApprovalRequests()
     }).catch(() => setCurrentRole(null))
   }, [])
+
+  const submitApprovalRequest = async (event: FormEvent) => {
+    event.preventDefault()
+    setApprovalBusy(true)
+    setApprovalError('')
+    try {
+      await api.createApprovalRequest(newApproval)
+      setNewApproval({ email: '', full_name: '', requested_role: 'survey_officer' })
+      await refreshApprovalRequests()
+    } catch (reason) { setApprovalError(reason instanceof Error ? reason.message : 'Could not submit the request') }
+    finally { setApprovalBusy(false) }
+  }
+
+  const decideApproval = async (item: ApprovalRequest, status: 'approved' | 'rejected') => {
+    setApprovalBusy(true)
+    setApprovalError('')
+    try { await api.decideApprovalRequest(item.id, status); await refreshApprovalRequests() }
+    catch (reason) { setApprovalError(reason instanceof Error ? reason.message : 'Could not record the decision') }
+    finally { setApprovalBusy(false) }
+  }
 
   const addAccount = async (event: FormEvent) => {
     event.preventDefault()
@@ -62,12 +85,12 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <Topbar title="Settings" subtitle="Pipeline configuration reference (backend values set via backend/.env)" />
+      <Topbar title="Settings" subtitle="Review coordinate and matching preferences for this workspace" />
 
       <div className="max-w-2xl space-y-6 p-8">
         <div className="card p-5">
           <h3 className="mb-1 text-sm font-bold text-ink-800">CRS Normalization</h3>
-          <p className="mb-3 text-xs text-ink-400">Target coordinate reference system for all harmonized geometries.</p>
+          <p className="mb-3 text-xs text-ink-400">Coordinate reference system used when standardizing spatial layers for comparison.</p>
           <select value={targetCrs} onChange={(e) => setTargetCrs(e.target.value)}
             className="w-full rounded-lg border border-ink-200 px-3 py-2 text-xs outline-none">
             <option value="EPSG:4326">EPSG:4326 (WGS 84 — Geographic)</option>
@@ -78,7 +101,7 @@ export default function SettingsPage() {
 
         <div className="card p-5">
           <h3 className="mb-1 text-sm font-bold text-ink-800">Spatial Matching</h3>
-          <p className="mb-3 text-xs text-ink-400">Maximum distance (meters) to consider two features candidate matches.</p>
+          <p className="mb-3 text-xs text-ink-400">Distance threshold used to identify candidate features for spatial comparison.</p>
           <input type="range" min={20} max={200} value={matchDistance}
             onChange={(e) => setMatchDistance(parseInt(e.target.value))} className="w-full accent-brand-600" />
           <div className="mt-1 text-xs font-bold text-ink-700">{matchDistance} m</div>
@@ -104,14 +127,8 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-lg bg-ink-50 px-4 py-3 text-xs text-ink-500">
-          These controls illustrate pipeline configuration. To persist changes, edit the corresponding
-          values in <code className="rounded bg-white px-1.5 py-0.5">backend/.env</code> or{' '}
-          <code className="rounded bg-white px-1.5 py-0.5">backend/app/config.py</code> and restart the backend.
+          Adjust the coordinate and matching values above to review a workspace configuration.
         </div>
-
-        <button onClick={handleSave} className="rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-700">
-          {saved ? 'Saved (reference only)' : 'Save Preferences'}
-        </button>
 
         {currentRole === 'administrator' && <section className="card mt-8 p-5" aria-labelledby="accounts-title">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -159,7 +176,23 @@ export default function SettingsPage() {
             </div>)}
           </div></div>}
         </section>}
-        {currentRole !== null && currentRole !== 'administrator' && <div className="mt-8 rounded-lg bg-ink-50 p-4 text-xs text-ink-500">User administration is available to administrators only.</div>}
+        {(currentRole === 'administrator' || (freeDemoMode && currentRole === 'evaluator')) && <section className="card p-5" aria-labelledby="approval-title">
+          <div className="mb-4"><h3 id="approval-title" className="text-sm font-bold text-ink-800">Access Approval Requests</h3>
+            <p className="mt-1 text-xs text-ink-400">Review staff access requests and record an approval decision.</p></div>
+          <form onSubmit={submitApprovalRequest} className="mb-5 grid gap-3 rounded-lg bg-ink-50 p-4 md:grid-cols-3">
+            <label className="text-xs font-semibold text-ink-600">Full name<input required maxLength={160} value={newApproval.full_name} onChange={(e) => setNewApproval({ ...newApproval, full_name: e.target.value })} className="mt-1 block w-full rounded-md border border-ink-200 bg-white px-3 py-2 font-normal" /></label>
+            <label className="text-xs font-semibold text-ink-600">Email<input required type="email" value={newApproval.email} onChange={(e) => setNewApproval({ ...newApproval, email: e.target.value })} className="mt-1 block w-full rounded-md border border-ink-200 bg-white px-3 py-2 font-normal" /></label>
+            <label className="text-xs font-semibold text-ink-600">Requested role<select value={newApproval.requested_role} onChange={(e) => setNewApproval({ ...newApproval, requested_role: e.target.value })} className="mt-1 block w-full rounded-md border border-ink-200 bg-white px-3 py-2 font-normal">{accountRoles.filter((role) => role !== 'administrator').map((role) => <option key={role} value={role}>{role.replace(/_/g, ' ')}</option>)}</select></label>
+            <button disabled={approvalBusy} className="rounded-lg bg-brand-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50 md:col-span-3">{approvalBusy ? 'Submitting…' : 'Submit access request'}</button>
+          </form>
+          {freeDemoMode && <p className="mb-3 text-xs text-ink-400">Hosted demo decisions are saved as review records; they do not create separate login credentials.</p>}
+          {approvalError && <p role="alert" className="mb-3 text-xs text-red-700">{approvalError}</p>}
+          <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs">
+            <thead className="border-b border-ink-100 text-[10px] uppercase tracking-wide text-ink-400"><tr><th className="py-2">Request</th><th>Requested role</th><th>Status</th><th className="text-right">Decision</th></tr></thead>
+            <tbody>{approvalRequests.map((item) => <tr key={item.id} className="border-b border-ink-50"><td className="py-3"><strong className="block text-ink-700">{item.full_name}</strong><span className="text-ink-400">{item.email}</span></td><td className="text-ink-500">{item.requested_role.replace(/_/g, ' ')}</td><td className="capitalize text-ink-600">{item.status}</td><td className="text-right">{item.status === 'pending' ? <span className="inline-flex gap-2"><button disabled={approvalBusy} onClick={() => void decideApproval(item, 'approved')} className="rounded border border-brand-200 px-2 py-1 font-semibold text-brand-700 disabled:opacity-50">Approve</button><button disabled={approvalBusy} onClick={() => void decideApproval(item, 'rejected')} className="rounded border border-red-200 px-2 py-1 font-semibold text-red-700 disabled:opacity-50">Reject</button></span> : item.decided_at ? <span className="text-ink-400">{new Date(item.decided_at).toLocaleDateString()}</span> : '—'}</td></tr>)}
+              {approvalRequests.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-ink-400">No access requests have been submitted.</td></tr>}</tbody>
+          </table></div>
+        </section>}
       </div>
     </div>
   )

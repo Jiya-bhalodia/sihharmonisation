@@ -83,6 +83,11 @@ export const api = {
       method: 'PATCH', body: JSON.stringify({ is_active }),
     }),
   getAuditLog: () => request<Array<{ id: string; actor_email: string; action: string; resource_type: string; resource_id: string | null; created_at: string }>>('/auth/audit?limit=50'),
+  getApprovalRequests: () => request<Array<ApprovalRequest>>('/auth/approval-requests'),
+  createApprovalRequest: (data: { email: string; full_name: string; requested_role: string }) =>
+    request<ApprovalRequest>('/auth/approval-requests', { method: 'POST', body: JSON.stringify(data) }),
+  decideApprovalRequest: (id: string, status: 'approved' | 'rejected') =>
+    request<ApprovalRequest>(`/auth/approval-requests/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
   getDatasets: () => request<Dataset[]>('/datasets'),
   uploadDataset: (formData: FormData) =>
@@ -153,3 +158,14 @@ export const api = {
 }
 
 export { ApiError }
+
+export interface ApprovalRequest {
+  id: string
+  email: string
+  full_name: string
+  requested_role: string
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+  decided_at: string | null
+  decided_by: string | null
+}

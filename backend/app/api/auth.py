@@ -10,7 +10,7 @@ from redis.exceptions import RedisError
 
 from app.config import get_settings
 from app.database import get_db
-from app.models.orm import AuditLog, User
+from app.models.orm import ApprovalRequest, AuditLog, User
 from app.security import (
     ROLES, authenticate, current_user, free_demo_user, hash_password, issue_token,
     require_permission, write_audit,
@@ -133,6 +133,24 @@ class UserStatusUpdate(BaseModel):
     is_active: bool
 
 
+class ApprovalRequestCreate(BaseModel):
+    email: str
+    full_name: str = Field(min_length=1, max_length=160)
+    requested_role: str
+
+    @field_validator("email")
+    @classmethod
+    def valid_email(cls, value: str) -> str:
+        value = value.strip().lower()
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", value):
+            raise ValueError("Enter a valid email address")
+        return value
+
+
+class ApprovalDecision(BaseModel):
+    status: str
+
+
 @router.post("/login")
 def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     settings = get_settings()
@@ -161,6 +179,57 @@ def me(user: User | None = Depends(current_user)):
         return {"authenticated": False, "mode": "demo"}
     return {"authenticated": True, "id": user.id, "email": user.email,
             "full_name": user.full_name, "role": user.role}
+
+
+def _require_approval_manager(user: User | None) -> None:
+    settings = get_settings()
+    if settings.FREE_DEMO_MODE:
+        if user is None or user.role != "evaluator":
+            raise HTTPException(403, "Approval review is available to the hosted demo evaluator")
+        return
+    ensure_production_auth()
+    require_permission(user, "users:manage")
+
+
+@router.get("/approval-requests")
+def list_approval_requests(db: Session = Depends(get_db), actor: User | None = Depends(current_user)):
+    _require_approval_manager(actor)
+    return db.query(ApprovalRequest).order_by(ApprovalRequest.created_at.desc()).limit(100).all()
+
+
+@router.post("/approval-requests", status_code=201)
+def create_approval_request(req: ApprovalRequestCreate, db: Session = Depends(get_db),
+                            actor: User | None = Depends(current_user)):
+    _require_approval_manager(actor)
+    if req.requested_role not in (ROLES - {"administrator"}):
+        raise HTTPException(400, "Select a supported staff role")
+    request_row = ApprovalRequest(
+        id=new_id("AR"), email=req.email, full_name=req.full_name.strip(),
+        requested_role=req.requested_role, status="pending", created_at=datetime.utcnow(),
+    )
+    db.add(request_row)
+    db.commit()
+    db.refresh(request_row)
+    return request_row
+
+
+@router.patch("/approval-requests/{request_id}")
+def decide_approval_request(request_id: str, req: ApprovalDecision, db: Session = Depends(get_db),
+                            actor: User | None = Depends(current_user)):
+    _require_approval_manager(actor)
+    if req.status not in {"approved", "rejected"}:
+        raise HTTPException(400, "Decision must be approved or rejected")
+    request_row = db.query(ApprovalRequest).filter(ApprovalRequest.id == request_id).first()
+    if request_row is None:
+        raise HTTPException(404, "Approval request not found")
+    if request_row.status != "pending":
+        raise HTTPException(409, "This request has already been decided")
+    request_row.status = req.status
+    request_row.decided_at = datetime.utcnow()
+    request_row.decided_by = actor.email if actor else None
+    db.commit()
+    db.refresh(request_row)
+    return request_row
 
 
 @router.post("/users", status_code=201)

@@ -19,6 +19,10 @@ const CANONICAL_FIELDS = [
 
 export default function HarmonizationPage({ userRole, freeDemoMode = false }: { userRole?: string; freeDemoMode?: boolean }) {
   const { data: mappings, refetch: refetchMappings } = useApi(() => api.getMappings())
+  const { data: matches } = useApi(() => api.getMatches({ limit: 400 }))
+  const { data: conflicts } = useApi(() => api.getConflicts())
+  const { data: topology } = useApi(() => api.getTopologyResults())
+  const { data: parcels } = useApi(() => api.getParcels({ limit: 300 }))
   const [job, setJob] = useState<HarmonizationJob | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,7 +49,9 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           const failure = latest.stages.find((stage) => stage.status === 'failed')
           setError(failure?.detail || 'Automatic harmonization failed. Check the worker logs.')
         }
-        if (active && latest.status === 'completed') refetchMappings()
+        if (active && latest.status === 'completed') {
+          window.dispatchEvent(new Event('bhumix:data-updated'))
+        }
       } catch (reason) {
         if (active) setError(reason instanceof Error ? reason.message : 'Could not load harmonization status.')
       } finally {
@@ -86,7 +92,6 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         setError(failure?.detail || 'Harmonization failed. Check the backend worker logs for details.')
       }
       if (result.status === 'completed') {
-        refetchMappings()
         window.dispatchEvent(new Event('bhumix:data-updated'))
       }
     } catch (e: unknown) {
@@ -130,6 +135,11 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
         {error && (
           <div className="card flex items-center gap-2 border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
             <AlertCircle size={15} /> {error}
+          </div>
+        )}
+        {job?.status === 'completed' && !error && (
+          <div role="status" className="card border-brand-200 bg-brand-50 px-4 py-3 text-xs font-semibold text-brand-800">
+            Harmonization completed successfully. Results below have been refreshed from the API.
           </div>
         )}
 
@@ -192,6 +202,20 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           )}
         </div>
 
+        <section className="card p-5" aria-label="Latest harmonization results">
+          <h3 className="mb-4 text-sm font-bold text-ink-800">Latest Results</h3>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            <ResultCount label="Matches" value={matches?.length} />
+            <ResultCount label="Conflicts" value={conflicts?.length} />
+            <ResultCount label="Attribute mappings" value={mappings?.length} />
+            <ResultCount label="Topology results" value={topology?.length} />
+            <ResultCount label="Unified parcels" value={parcels?.length} />
+          </div>
+          <p className="mt-3 text-xs text-ink-500">
+            {parcels?.length ? `Mean parcel confidence: ${(parcels.reduce((sum, parcel) => sum + parcel.confidence_score, 0) / parcels.length).toFixed(1)}%` : 'Confidence results appear when unified parcels are available.'}
+          </p>
+        </section>
+
         <div className="card p-5">
           <h3 className="mb-3 text-sm font-bold text-ink-800">Intelligent Attribute Mapping</h3>
           <p className="mb-3 text-xs text-ink-400">
@@ -252,4 +276,11 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
       </div>
     </div>
   )
+}
+
+function ResultCount({ label, value }: { label: string; value: number | undefined }) {
+  return <div className="rounded-lg bg-ink-50 p-3">
+    <div className="text-xl font-extrabold text-ink-900">{value ?? '—'}</div>
+    <div className="mt-1 text-[10.5px] font-medium text-ink-500">{label}</div>
+  </div>
 }

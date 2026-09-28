@@ -171,6 +171,19 @@ class User(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
+class ApprovalRequest(Base):
+    __tablename__ = "approval_requests"
+
+    id = Column(String, primary_key=True)
+    email = Column(String, nullable=False, index=True)
+    full_name = Column(String, nullable=False)
+    requested_role = Column(String, nullable=False)
+    status = Column(String, nullable=False, default="pending", index=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    decided_at = Column(DateTime, nullable=True)
+    decided_by = Column(String, nullable=True)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 
