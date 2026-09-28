@@ -26,26 +26,41 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
   const { data: statistics } = useApi(() => api.getStatistics())
   const [job, setJob] = useState<HarmonizationJob | null>(null)
   const [running, setRunning] = useState(false)
+  const [estimatedStageIndex, setEstimatedStageIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [mappingError, setMappingError] = useState<string | null>(null)
   const [savingMappingId, setSavingMappingId] = useState<string | null>(null)
   const latestJobId = useRef<string | null>(null)
+  const activeRunId = useRef(0)
   const canReviewMappings = !userRole || userRole === 'reviewer' || userRole === 'administrator'
+
+  // The hosted POST is synchronous, so it cannot provide a job id until the
+  // pipeline is over. Keep the UI moving conservatively while it is in flight;
+  // this is presentation progress only and never marks the job complete.
+  useEffect(() => {
+    if (!running || !freeDemoMode) return
+    const timer = window.setInterval(() => {
+      setEstimatedStageIndex((index) => Math.min(PIPELINE_STAGE_NAMES.length - 2, index + 1))
+    }, 1600)
+    return () => window.clearInterval(timer)
+  }, [running, freeDemoMode])
 
   useEffect(() => {
     let active = true
+    const startupRunId = activeRunId.current
     const loadLatestJob = async () => {
       try {
         const jobs = await api.listJobs()
-        if (!active || jobs.length === 0) return
+        if (!active || activeRunId.current !== startupRunId || jobs.length === 0) return
         let latest = jobs[0]
         latestJobId.current = latest.id
         setJob(latest)
         if (latest.status === 'queued' || latest.status === 'running') setRunning(true)
         while (active && (latest.status === 'queued' || latest.status === 'running')) {
           await wait(1200)
-          if (!active) return
+          if (!active || activeRunId.current !== startupRunId) return
           latest = await api.getJob(latest.id)
+          if (!active || activeRunId.current !== startupRunId) return
           setJob(latest)
         }
         if (active && latest.status === 'failed') {
@@ -56,9 +71,9 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
           window.dispatchEvent(new Event('bhumix:data-updated'))
         }
       } catch (reason) {
-        if (active) setError(reason instanceof Error ? reason.message : 'Could not load harmonization status.')
+        if (active && activeRunId.current === startupRunId) setError(reason instanceof Error ? reason.message : 'Could not load harmonization status.')
       } finally {
-        if (active) setRunning(false)
+        if (active && activeRunId.current === startupRunId) setRunning(false)
       }
     }
     void loadLatestJob()
@@ -81,46 +96,56 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
   const handleRun = async () => {
     const requestStartedAt = Date.now()
     const previousJobId = latestJobId.current
+    const runId = ++activeRunId.current
     setRunning(true)
     setError(null)
     setJob(null)
+    setEstimatedStageIndex(0)
     try {
       let requestSettled = false
       const request = api.runHarmonization()
       void request.then(() => { requestSettled = true }, () => { requestSettled = true })
 
-      // Hosted free-demo harmonization is synchronous: POST returns the final
-      // job only when processing ends. Read committed stages in parallel so
-      // the UI follows actual backend progress while that request is pending.
-      while (freeDemoMode && !requestSettled) {
-        await wait(900)
-        if (requestSettled) break
-        try {
-          const jobs = await api.listJobs()
-          const activeJob = jobs.find((candidate) => {
-            if (candidate.id === previousJobId) return false
-            // SQLAlchemy serializes naive UTC datetimes without a timezone;
-            // parse those as UTC rather than the browser's local timezone.
-            const timestamp = /(?:Z|[+-]\d{2}:\d{2})$/i.test(candidate.started_at)
-              ? candidate.started_at
-              : `${candidate.started_at}Z`
-            return Date.parse(timestamp) >= requestStartedAt - 15_000
-          })
-          if (activeJob) {
-            latestJobId.current = activeJob.id
-            setJob(activeJob)
+      // Observe committed hosted stages without making job discovery a gate
+      // for the synchronous POST response or its completion handling.
+      if (freeDemoMode) {
+        void (async () => {
+          while (!requestSettled && activeRunId.current === runId) {
+            await wait(900)
+            if (requestSettled || activeRunId.current !== runId) return
+            try {
+              const jobs = await api.listJobs()
+              if (requestSettled || activeRunId.current !== runId) return
+              const activeJob = jobs.find((candidate) => {
+                if (candidate.id === previousJobId) return false
+                // SQLAlchemy serializes naive UTC datetimes without a timezone.
+                const timestamp = /(?:Z|[+-]\d{2}:\d{2})$/i.test(candidate.started_at)
+                  ? candidate.started_at
+                  : `${candidate.started_at}Z`
+                return Date.parse(timestamp) >= requestStartedAt - 60_000
+              })
+              // A completed row is not enough to finish the UI: the synchronous
+              // POST response remains authoritative for hosted runs.
+              if (activeJob && activeJob.status !== 'completed') {
+                latestJobId.current = activeJob.id
+                setJob(activeJob)
+              }
+            } catch {
+              // Transient status discovery failures do not block the POST.
+            }
           }
-        } catch {
-          // Keep the POST as the source of truth if a status poll is transiently unavailable.
-        }
+        })()
       }
 
       let result = await request
+      requestSettled = true
+      if (activeRunId.current !== runId) return
       latestJobId.current = result.id
       setJob(result)
       while (result.status === 'queued' || result.status === 'running') {
         await wait(1200)
         result = await api.getJob(result.id)
+        if (activeRunId.current !== runId) return
         latestJobId.current = result.id
         setJob(result)
       }
@@ -130,11 +155,15 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
       }
       if (result.status === 'completed') {
         window.dispatchEvent(new Event('bhumix:data-updated'))
+      } else if (result.status !== 'failed') {
+        setError(`Harmonization returned an unexpected status: ${result.status || 'unknown'}.`)
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Harmonization failed. Check that the backend is running, then try again.')
+      if (activeRunId.current === runId) {
+        setError(e instanceof Error ? e.message : 'Harmonization failed. Check that the backend is running, then try again.')
+      }
     } finally {
-      setRunning(false)
+      if (activeRunId.current === runId) setRunning(false)
     }
   }
 
@@ -156,6 +185,11 @@ export default function HarmonizationPage({ userRole, freeDemoMode = false }: { 
     if (job?.status === 'queued' || job?.status === 'running' || (running && !job)) {
       const backendActive = job?.stages.find((item) => item.status === 'running')
       if (backendActive) return backendActive.name === name ? 'running' : (stage?.status || 'pending')
+      if (running && !job && freeDemoMode) {
+        if (index < estimatedStageIndex) return 'completed'
+        if (index === estimatedStageIndex) return 'running'
+        return 'pending'
+      }
       const nextStage = PIPELINE_STAGE_NAMES.find((stageName) =>
         !job?.stages.some((item) => item.name === stageName && (item.status === 'completed' || item.status === 'disabled')))
       if (nextStage === name) return job?.status === 'queued' ? 'queued' : 'running'
