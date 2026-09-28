@@ -1,6 +1,10 @@
 """Resolve the complete generated sample fixture set across repo/image layouts."""
 import os
 from pathlib import Path
+from app.utils.logger import get_logger
+
+
+logger = get_logger("sample_data")
 
 
 REQUIRED_SAMPLE_FILES = (
@@ -32,16 +36,28 @@ def resolve_sample_data_dir(app_dir: Path, configured_dir: str | None = None) ->
         candidates.append(app_dir.parents[1] / "data" / "sample")
 
     seen = set()
+    diagnostics = []
     for candidate in candidates:
         candidate = candidate.resolve()
         if candidate in seen:
             continue
         seen.add(candidate)
-        if candidate.is_dir() and all((candidate / name).is_file() for name in REQUIRED_SAMPLE_FILES):
+        exists = candidate.is_dir()
+        filenames = sorted(path.name for path in candidate.iterdir()) if exists else []
+        missing = [name for name in REQUIRED_SAMPLE_FILES if not (candidate / name).is_file()]
+        if exists and not missing:
             return candidate
+        diagnostics.append((candidate, exists, filenames, missing))
 
     checked = ", ".join(str(path) for path in seen)
-    raise FileNotFoundError(f"Complete sample fixture directory not found; checked: {checked}")
+    for candidate, exists, filenames, missing in diagnostics:
+        logger.error("Sample fixture candidate: path=%s directory_exists=%s files=%s missing_required=%s",
+                     candidate, exists, filenames, missing)
+    missing_by_candidate = "; ".join(f"{path} missing={missing}" for path, _, _, missing in diagnostics)
+    raise FileNotFoundError(
+        f"Complete sample fixture directory not found; checked: {checked}; "
+        f"missing required files by candidate: {missing_by_candidate}"
+    )
 
 
 def get_sample_data_dir() -> Path:
